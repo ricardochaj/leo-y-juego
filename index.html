@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 8; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 9; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // evitar bucle: solo aplicar si no venimos ya de una aplicación
@@ -86,6 +86,8 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .fila-emoji{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
 .opcion-img{font-size:3.4rem;background:#fff;border:4px solid #eee;border-radius:20px;width:96px;height:96px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sombra);transition:transform .08s}
 .opcion-img:active{transform:scale(.94)}
+.opcion-color{width:96px;height:96px;border-radius:20px;border:4px solid rgba(0,0,0,.12);cursor:pointer;box-shadow:var(--sombra);transition:transform .08s}
+.opcion-color:active{transform:scale(.94)}
 .opcion-txt{font-family:var(--fuente-display);font-size:2rem;background:var(--sol);color:var(--pizarron);border:none;border-radius:18px;padding:14px 26px;cursor:pointer;box-shadow:var(--sombra);min-width:90px}
 .opcion-txt:active{transform:translateY(3px)}
 .correcto{background:var(--pasto)!important;border-color:var(--pasto-hondo)!important}
@@ -407,6 +409,59 @@ const DEF = {
     {ico:'🎮', txt:'Jugar'},
     {ico:'🛁', txt:'Bañarse'},
     {ico:'🌙', txt:'Dormir'}
+  ],
+  // COLORES: nombre + emoji de muestra de ese color
+  colores: [
+    {n:'ROJO', c:'#e63946', emoji:'🟥'},
+    {n:'AZUL', c:'#1d6fd6', emoji:'🟦'},
+    {n:'VERDE', c:'#2aa856', emoji:'🟩'},
+    {n:'AMARILLO', c:'#ffcf3f', emoji:'🟨'},
+    {n:'NARANJA', c:'#ff8c42', emoji:'🟧'},
+    {n:'VIOLETA', c:'#9b6cff', emoji:'🟪'},
+    {n:'MARRÓN', c:'#8b5a2b', emoji:'🟫'},
+    {n:'NEGRO', c:'#222222', emoji:'⬛'},
+    {n:'BLANCO', c:'#f4f4f4', emoji:'⬜'},
+    {n:'ROSA', c:'#ff8fc8', emoji:'🌸'}
+  ],
+  // FORMAS: nombre + emoji
+  formas: [
+    {n:'CÍRCULO', emoji:'⭕'},
+    {n:'CUADRADO', emoji:'🟦'},
+    {n:'TRIÁNGULO', emoji:'🔺'},
+    {n:'ESTRELLA', emoji:'⭐'},
+    {n:'CORAZÓN', emoji:'❤️'},
+    {n:'ROMBO', emoji:'🔷'},
+    {n:'ÓVALO', emoji:'🥚'},
+    {n:'LUNA', emoji:'🌙'}
+  ],
+  // CATEGORÍAS: cada grupo con su nombre, ícono y elementos
+  categorias: [
+    {n:'ANIMALES', ico:'🐶', items:['🐱','🐶','🐮','🐴','🐷','🐰','🦁','🐯','🐻','🐵','🐔','🐸']},
+    {n:'COMIDAS', ico:'🍎', items:['🍎','🍌','🍇','🍉','🍞','🧀','🥚','🍓','🥕','🍔','🍕','🥦']},
+    {n:'TRANSPORTES', ico:'🚗', items:['🚗','🚌','✈️','⛵','🚆','🚲','🏍️','🚜','🚑','🚓','🚀','🛵']},
+    {n:'ROPA', ico:'👕', items:['👕','👖','👟','🧢','🧥','🧦','👗','🩳','👞','🧤','🥼','👚']}
+  ],
+  // QUÉ FALTA: objeto completo y descripción de la pieza que falta (con distractores)
+  queFalta: [
+    {obj:'🚲', nom:'bicicleta', falta:'una rueda', ok:'⚙️', distract:['🪶','🔑']},
+    {obj:'🚗', nom:'auto', falta:'una rueda', ok:'🛞', distract:['🌂','🎈']},
+    {obj:'🏠', nom:'casa', falta:'la puerta', ok:'🚪', distract:['🍕','🐟']},
+    {obj:'😊', nom:'cara', falta:'la nariz', ok:'👃', distract:['🍎','⚽']},
+    {obj:'🌳', nom:'árbol', falta:'una hoja', ok:'🍃', distract:['🔧','📱']},
+    {obj:'🐶', nom:'perro', falta:'la cola', ok:'〰️', distract:['🍌','🚗']},
+    {obj:'⛵', nom:'barco', falta:'la vela', ok:'⛵', distract:['🌵','🍩']},
+    {obj:'🎂', nom:'torta', falta:'las velas', ok:'🕯️', distract:['🔌','🧦']}
+  ],
+  // HISTORIAS SOCIALES: situación + pregunta + opciones de emoción [emoji, esCorrecta]
+  historias: [
+    {sit:'A Juan se le perdió su juguete preferido.', preg:'¿Cómo se siente Juan?', ops:[['😢',true],['😀',false],['😴',false]]},
+    {sit:'Es el cumpleaños de Ana y le traen una torta.', preg:'¿Cómo se siente Ana?', ops:[['😀',true],['😠',false],['😢',false]]},
+    {sit:'A Pedro le rompieron su dibujo a propósito.', preg:'¿Cómo se siente Pedro?', ops:[['😠',true],['😀',false],['😮',false]]},
+    {sit:'Sofía está sola y nadie quiere jugar con ella.', preg:'¿Cómo se siente Sofía?', ops:[['😢',true],['😀',false],['😴',false]]},
+    {sit:'Mateo escuchó un ruido fuerte y oscuro de noche.', preg:'¿Cómo se siente Mateo?', ops:[['😨',true],['😀',false],['😋',false]]},
+    {sit:'A Lucía le regalaron el perrito que quería.', preg:'¿Cómo se siente Lucía?', ops:[['🥰',true],['😠',false],['😢',false]]},
+    {sit:'Tomás jugó toda la tarde y ahora tiene mucho sueño.', preg:'¿Cómo se siente Tomás?', ops:[['😴',true],['😀',false],['😠',false]]},
+    {sit:'A Caro le dieron una sorpresa que no esperaba.', preg:'¿Cómo se siente Caro?', ops:[['😮',true],['😢',false],['😴',false]]}
   ]
 };
 
@@ -468,7 +523,7 @@ const Banco = {
       if(!this.data._editado){ this.data=this.clonarDefault(); }
       this.data._v=this.VERSION; this.guardar();
     }
-    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
+    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina','colores','formas','categorias','queFalta','historias'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
   },
   clonarDefault(){ const d=JSON.parse(JSON.stringify(DEF)); d._v=this.VERSION; return d; },
   guardar(){ localStorage.setItem('leoyjuego-banco', JSON.stringify(this.data)); },
@@ -1309,6 +1364,11 @@ function menuJuegos(){
     <button class="btn-grande c-cielo" onclick="Nav.ir(juegoEmociones)"><span class="emo">😊</span>Emociones</button>
     <button class="btn-grande c-coral" onclick="Nav.ir(juegoSecuencia)"><span class="emo">🔁</span>¿Qué sigue?</button>
     <button class="btn-grande c-pasto" onclick="Nav.ir(juegoIgual)"><span class="emo">🔍</span>Encontrá<br>el igual</button>
+    <button class="btn-grande c-coral" onclick="Nav.ir(juegoColores)"><span class="emo">🎨</span>Colores</button>
+    <button class="btn-grande c-uva"   onclick="Nav.ir(juegoFormas)"><span class="emo">🔵</span>Formas</button>
+    <button class="btn-grande c-sol"   onclick="Nav.ir(juegoCategorias)"><span class="emo">🗂️</span>Categorías</button>
+    <button class="btn-grande c-cielo" onclick="Nav.ir(juegoQueFalta)"><span class="emo">🧩</span>¿Qué falta?</button>
+    <button class="btn-grande c-pasto" onclick="Nav.ir(juegoHistorias)"><span class="emo">💭</span>Historias</button>
   </div>`;
 }
 
@@ -1535,6 +1595,182 @@ function rondaIgual(aciertos){
     }else{ el.classList.add('incorrecto'); Estado.registrarFallo('igual');
       Mascota.animar2();
       setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; },700);
+    }
+  };
+}
+
+/* ===================== JUEGO · COLORES ===================== */
+function juegoColores(){ rondaColor(0); }
+function rondaColor(aciertos){
+  if(aciertos>=Nivel.metaRonda(4)){ return finRonda('voc', juegoColores); }
+  const lista=Banco.data.colores||DEF.colores;
+  const correcto=UI.azar(lista);
+  const nOps=Nivel.escala({jardin:2, g1:3, g2:4, g3:4, g7:5});
+  const distract=UI.mezclar(lista.filter(c=>c.n!==correcto.n)).slice(0,nOps-1);
+  const ops=UI.mezclar([[correcto,true],...distract.map(d=>[d,false])]);
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div class="consigna">Tocá el color <b>${correcto.n.toLowerCase()}</b></div>
+       <button class="btn-sonido" onclick="Voz.hablar('Tocá el color ${correcto.n.toLowerCase()}')">🔊 Escuchar</button>
+       <div class="fila-emoji" id="ops" style="margin-top:8px">
+         ${ops.map(o=>`<div class="opcion-color" data-ok="${o[1]}" data-n="${o[0].n}" style="background:${o[0].c}"></div>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar('Tocá el color '+correcto.n.toLowerCase());
+  document.getElementById('ops').onclick=e=>{
+    const el=e.target.closest('.opcion-color'); if(!el||el.dataset.done)return;
+    el.dataset.done=1; Voz.hablar(el.dataset.n);
+    if(el.dataset.ok==='true'){ el.classList.add('correcto'); Estado.sumarEstrella(); Mascota.festejar();
+      setTimeout(()=>rondaColor(aciertos+1),1000);
+    }else{ el.classList.add('incorrecto'); Estado.registrarFallo('color '+correcto.n);
+      const buena=document.querySelector('#ops .opcion-color[data-ok="true"]'); if(buena) buena.classList.add('correcto');
+      Mascota.animar('Ese es '+el.dataset.n.toLowerCase()+'. Buscá el '+correcto.n.toLowerCase());
+      setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; if(buena)buena.classList.remove('correcto'); },1500);
+    }
+  };
+}
+
+/* ===================== JUEGO · FORMAS ===================== */
+function juegoFormas(){ rondaForma(0); }
+function rondaForma(aciertos){
+  if(aciertos>=Nivel.metaRonda(4)){ return finRonda('voc', juegoFormas); }
+  const lista=Banco.data.formas||DEF.formas;
+  const correcta=UI.azar(lista);
+  const nOps=Nivel.escala({jardin:2, g1:3, g2:4, g3:4, g7:5});
+  const distract=UI.mezclar(lista.filter(f=>f.n!==correcta.n)).slice(0,nOps-1);
+  const ops=UI.mezclar([[correcta,true],...distract.map(d=>[d,false])]);
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div class="consigna">¿Cuál es el <b>${correcta.n.toLowerCase()}</b>?</div>
+       <button class="btn-sonido" onclick="Voz.hablar('¿Cuál es el ${correcta.n.toLowerCase()}?')">🔊 Escuchar</button>
+       <div class="fila-emoji" id="ops" style="margin-top:8px">
+         ${ops.map(o=>`<div class="opcion-img" data-ok="${o[1]}" data-n="${o[0].n}">${o[0].emoji}</div>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar('¿Cuál es el '+correcta.n.toLowerCase()+'?');
+  document.getElementById('ops').onclick=e=>{
+    const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
+    el.dataset.done=1; Voz.hablar(el.dataset.n);
+    if(el.dataset.ok==='true'){ el.classList.add('correcto'); Estado.sumarEstrella(); Mascota.festejar();
+      setTimeout(()=>rondaForma(aciertos+1),1000);
+    }else{ el.classList.add('incorrecto'); Estado.registrarFallo('forma '+correcta.n);
+      const buena=document.querySelector('#ops .opcion-img[data-ok="true"]'); if(buena) buena.classList.add('correcto');
+      Mascota.animar('Ese es '+el.dataset.n.toLowerCase()+'. Buscá el '+correcta.n.toLowerCase());
+      setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; if(buena)buena.classList.remove('correcto'); },1500);
+    }
+  };
+}
+
+/* ===================== JUEGO · CATEGORÍAS =====================
+   Muestra objetos de una categoría + un intruso; el nene toca el que NO va.
+   Bueno para clasificación (clave en TEA). */
+function juegoCategorias(){ rondaCategoria(0); }
+function rondaCategoria(aciertos){
+  if(aciertos>=Nivel.metaRonda(4)){ return finRonda('voc', juegoCategorias); }
+  const cats=Banco.data.categorias||DEF.categorias;
+  const cat=UI.azar(cats);
+  const otras=cats.filter(c=>c.n!==cat.n);
+  const nCorrectos=Nivel.escala({jardin:2, g1:2, g2:3, g3:3, g7:4});
+  const correctos=UI.mezclar(cat.items).slice(0,nCorrectos);
+  const otraCat=UI.azar(otras);
+  const intruso=UI.azar(otraCat.items);
+  const sing=cat.n.toLowerCase().replace(/es$/,'').replace(/s$/,'');
+  const todos=UI.mezclar([...correctos.map(x=>[x,false]), [intruso,true]]);
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div style="font-size:2.6rem">${cat.ico}</div>
+       <div class="consigna">Casi todos son <b>${cat.n.toLowerCase()}</b>.<br>¿Cuál <b>NO</b> va?</div>
+       <button class="btn-sonido" onclick="Voz.hablar('¿Cuál no es ${sing}?')">🔊 Escuchar</button>
+       <div class="fila-emoji" id="ops" style="margin-top:8px">
+         ${todos.map(o=>`<div class="opcion-img" data-ok="${o[1]}">${o[0]}</div>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar('Casi todos son '+cat.n.toLowerCase()+'. ¿Cuál no va?');
+  document.getElementById('ops').onclick=e=>{
+    const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
+    el.dataset.done=1;
+    if(el.dataset.ok==='true'){ el.classList.add('correcto'); Estado.sumarEstrella(); Mascota.festejar();
+      Voz.hablar('¡Muy bien!');
+      setTimeout(()=>rondaCategoria(aciertos+1),1100);
+    }else{ el.classList.add('incorrecto'); Estado.registrarFallo('categoría '+cat.n);
+      Mascota.animar('Ese sí es '+sing+'. Buscá el que no va');
+      setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; },1200);
+    }
+  };
+}
+
+/* ===================== JUEGO · ¿QUÉ FALTA? =====================
+   Muestra un objeto y pregunta qué pieza le falta. Atención al detalle. */
+function juegoQueFalta(){ rondaQueFalta(0); }
+function rondaQueFalta(aciertos){
+  if(aciertos>=Nivel.metaRonda(4)){ return finRonda('voc', juegoQueFalta); }
+  const lista=Banco.data.queFalta||DEF.queFalta;
+  const item=UI.azar(lista);
+  const ops=UI.mezclar([[item.ok,true],...item.distract.map(d=>[d,false])]);
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div style="font-size:5rem">${item.obj}</div>
+       <div class="consigna">A esta <b>${item.nom}</b> le falta algo.<br>¿Qué le falta?</div>
+       <button class="btn-sonido" onclick="Voz.hablar('¿Qué le falta a la ${item.nom}?')">🔊 Escuchar</button>
+       <div class="fila-emoji" id="ops" style="margin-top:8px">
+         ${ops.map(o=>`<div class="opcion-img" data-ok="${o[1]}">${o[0]}</div>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar('A esta '+item.nom+' le falta algo. ¿Qué le falta?');
+  document.getElementById('ops').onclick=e=>{
+    const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
+    el.dataset.done=1;
+    if(el.dataset.ok==='true'){ el.classList.add('correcto'); Estado.sumarEstrella(); Mascota.festejar();
+      Voz.hablar('¡Muy bien! Le faltaba '+item.falta);
+      setTimeout(()=>rondaQueFalta(aciertos+1),1300);
+    }else{ el.classList.add('incorrecto'); Estado.registrarFallo('qué falta '+item.nom);
+      Mascota.animar('Mirá bien la '+item.nom);
+      setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; },1000);
+    }
+  };
+}
+
+/* ===================== JUEGO · HISTORIAS SOCIALES =====================
+   Situación cotidiana + "¿cómo se siente?". Lo más valioso para TEA:
+   entender emociones en contexto. Lee todo en voz alta. */
+function juegoHistorias(){ rondaHistoria(0); }
+function rondaHistoria(aciertos){
+  if(aciertos>=Nivel.metaRonda(3)){ return finRonda('comp', juegoHistorias); }
+  const lista=Banco.data.historias||DEF.historias;
+  const h=UI.azar(lista);
+  const ops=UI.mezclar(h.ops.slice());
+  const sitEsc=h.sit.replace(/'/g,"\\'");
+  const pregEsc=h.preg.replace(/'/g,"\\'");
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div style="font-size:3rem">💭</div>
+       <div class="frase-leer" style="font-size:1.1rem">${h.sit}</div>
+       <button class="btn-sonido" onclick="Voz.hablar('${sitEsc}')">🔊 Escuchar la historia</button>
+       <div class="consigna" style="margin-top:6px;cursor:pointer" onclick="Voz.hablar('${pregEsc}')">${h.preg} 🔊</div>
+       <div class="fila-emoji" id="ops" style="margin-top:6px">
+         ${ops.map(o=>`<div class="opcion-img" data-ok="${o[1]}">${o[0]}</div>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar(h.sit);
+  setTimeout(()=>Voz.hablar(h.preg), Math.max(2000, h.sit.length*85));
+  document.getElementById('ops').onclick=e=>{
+    const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
+    if(el.dataset.ok==='true'){ el.dataset.done=1; el.classList.add('correcto'); Estado.sumarEstrella(2); Mascota.festejar();
+      Voz.hablar('¡Muy bien!');
+      setTimeout(()=>rondaHistoria(aciertos+1),1300);
+    }else{ el.classList.add('incorrecto'); Estado.registrarFallo('historia social');
+      Mascota.animar('Pensá cómo se siente'); Voz.hablar(h.preg);
+      setTimeout(()=>el.classList.remove('incorrecto'),800);
     }
   };
 }
@@ -2386,7 +2622,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

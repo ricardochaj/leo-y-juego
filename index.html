@@ -9,10 +9,9 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 10; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 11; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
-    // evitar bucle: solo aplicar si no venimos ya de una aplicación
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
       window.__yaAplicado = true;
       document.open();
@@ -45,7 +44,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap');
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html,body{min-height:100%}
+html,body{margin:0}
 body{
   font-family:var(--fuente-cuerpo);
   color:var(--pizarron);
@@ -53,9 +52,8 @@ body{
   background-attachment:fixed;
   overflow-x:hidden;
   user-select:none;-webkit-user-select:none;
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
-#app{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;padding-top:env(safe-area-inset-top);box-sizing:border-box}
 #pantalla{flex:1;display:flex;flex-direction:column}
 #pantalla>.menu-grid{align-content:start}
 
@@ -2625,7 +2623,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

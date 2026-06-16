@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Leo y Juego</title>
+<script>
+/* APLICAR ACTUALIZACIÓN: si en una apertura anterior se descargó una versión
+   más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
+(function(){
+  try{
+    var V_ACTUAL = 7; // debe coincidir con APP_VERSION de abajo
+    var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
+    var htmlGuardado = localStorage.getItem('leoyjuego-html');
+    // evitar bucle: solo aplicar si no venimos ya de una aplicación
+    if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
+      window.__yaAplicado = true;
+      document.open();
+      document.write(htmlGuardado);
+      document.close();
+    }
+  }catch(e){}
+})();
+</script>
 <style>
 /* ====== TOKENS DE DISEÑO ======
    Paleta "patio de escuela argentino": celeste bandera, sol, pasto, tiza.
@@ -238,6 +256,7 @@ body.calma #btnCalma{background:#cfe0ec}
 
 <div class="globo-msj" id="globoMsj"></div>
 <button id="btnCalma" onclick="Calma.alternar()" title="Modo calma">🌙</button>
+<div id="versionApp" style="position:fixed;top:2px;left:6px;z-index:60;font-size:11px;color:rgba(255,255,255,.85);font-family:sans-serif;pointer-events:none">v?</div>
 <div id="mascota" onclick="Mascota.animar('¡Vamos que podés!')">
   <div class="cara" id="mascotaCara">🐶</div>
 </div>
@@ -2355,6 +2374,60 @@ function finRonda(mundoId, repetir){
   Confeti.lanzar(); Mascota.animar('¡Lo lograste!');
 }
 
+/* ===================== AUTO-ACTUALIZACIÓN DESDE GITHUB =====================
+   La app funciona 100% offline (este archivo trae todo adentro). Pero al abrir,
+   si hay internet, revisa si hay una versión más nueva publicada en GitHub y la
+   descarga en silencio para la próxima vez. Nunca interrumpe al nene.
+
+   CÓMO PUBLICAR UNA MEJORA:
+   1. Subí el index.html nuevo a tu GitHub (carpeta raíz del repo).
+   2. Subí también version.json con el número subido, ej: {"version": 8}
+   3. Listo: las apps lo toman solas la próxima vez que abran con internet.
+
+   IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
+   y el mismo número en version.json. */
+const APP_VERSION = 7;
+const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
+
+const AutoActualizar = {
+  async revisar(){
+    try{
+      // 1) ¿hay una versión ya descargada en una apertura anterior?
+      const guardada = localStorage.getItem('leoyjuego-html-version');
+      const htmlGuardado = localStorage.getItem('leoyjuego-html');
+      // si tengo guardada una más nueva que la que está corriendo, ya debería
+      // haberse aplicado al cargar (ver aplicarSiHayNueva). Acá solo busco online.
+
+      // 2) si no hay internet, salir tranquilo
+      if(!navigator.onLine) return;
+
+      // 3) leer el version.json del repo (archivo chiquito) con anti-caché
+      const vResp = await fetch(URL_BASE+'version.json?t='+Date.now(), {cache:'no-store'});
+      if(!vResp.ok) return;
+      const vData = await vResp.json();
+      const versionRemota = vData.version||0;
+
+      // ¿la versión remota es más nueva que la que corre Y que la ya descargada?
+      const yaDescargada = parseInt(guardada||'0',10);
+      if(versionRemota <= APP_VERSION && versionRemota <= yaDescargada) return;
+
+      // 4) descargar el index.html nuevo
+      const hResp = await fetch(URL_BASE+'index.html?t='+Date.now(), {cache:'no-store'});
+      if(!hResp.ok) return;
+      const htmlNuevo = await hResp.text();
+      // validación mínima: que parezca el archivo correcto
+      if(htmlNuevo.length<1000 || !htmlNuevo.includes('Leo y Juego')) return;
+
+      // 5) guardarlo para la próxima apertura
+      localStorage.setItem('leoyjuego-html', htmlNuevo);
+      localStorage.setItem('leoyjuego-html-version', String(versionRemota));
+      // no recargamos ahora para no interrumpir; se aplica al próximo arranque
+    }catch(e){ /* sin conexión o error: seguir con la versión actual */ }
+  }
+};
+// revisar actualizaciones en segundo plano, sin bloquear el arranque
+setTimeout(()=>AutoActualizar.revisar(), 3000);
+
 /* ===================== ARRANQUE ===================== */
 Estado.cargar();
 Banco.cargar();
@@ -2364,6 +2437,8 @@ document.addEventListener('pointerdown',()=>Voz.despertar(),{once:true});
 document.addEventListener('click',()=>Voz.despertar(),{once:true});
 UI.refrescarEstrellas();
 Mascota.cara.textContent=Estado.data.mascota;
+// mostrar la versión en pantalla (para verificar actualizaciones)
+try{ const vEl=document.getElementById('versionApp'); if(vEl) vEl.textContent='v'+APP_VERSION; }catch(e){}
 // Reasegurar que los botones de navegación queden coherentes cada vez que
 // cambia la pantalla (algunos juegos re-pintan vía setTimeout sin pasar por Nav).
 try{

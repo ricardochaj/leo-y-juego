@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 11; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 12; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
@@ -62,9 +62,10 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .titulo{font-size:2rem;text-align:center;color:var(--tiza);text-shadow:0 3px 0 rgba(0,0,0,.2);margin:10px 0}
 
 /* ====== BARRA SUPERIOR ====== */
-.topbar{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--cielo-hondo);box-shadow:0 3px 10px rgba(0,0,0,.15);position:relative;z-index:5}
+.topbar .titulo-app{font-family:var(--fuente-display);color:#fff;font-size:1.6rem;letter-spacing:.5px;text-shadow:0 2px 4px rgba(0,0,0,.25);flex:1;text-align:center}
 .topbar .volver{background:var(--tiza);border:none;border-radius:50%;width:48px;height:48px;font-size:1.5rem;box-shadow:var(--sombra);cursor:pointer}
-.topbar .estrellas{margin-left:auto;background:var(--sol);color:var(--pizarron);font-weight:800;border-radius:50px;padding:8px 16px;box-shadow:var(--sombra);font-size:1.1rem}
+.topbar .estrellas{background:var(--sol);color:var(--pizarron);font-weight:800;border-radius:50px;padding:8px 16px;box-shadow:var(--sombra);font-size:1.1rem}
 
 /* ====== BOTONES GRANDES MENÚ ====== */
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;padding-bottom:80px}
@@ -89,6 +90,9 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .opcion-img:active{transform:scale(.94)}
 .opcion-color{width:96px;height:96px;border-radius:20px;border:4px solid rgba(0,0,0,.12);cursor:pointer;box-shadow:var(--sombra);transition:transform .08s}
 .opcion-color:active{transform:scale(.94)}
+.paleta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;background:#f4f8ff;border-radius:16px;padding:10px}
+.color-pincel{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.2);cursor:pointer;transition:transform .1s}
+.color-pincel.sel{transform:scale(1.25);border-color:var(--pizarron)}
 .opcion-txt{font-family:var(--fuente-display);font-size:2rem;background:var(--sol);color:var(--pizarron);border:none;border-radius:18px;padding:14px 26px;cursor:pointer;box-shadow:var(--sombra);min-width:90px}
 .opcion-txt:active{transform:translateY(3px)}
 .correcto{background:var(--pasto)!important;border-color:var(--pasto-hondo)!important}
@@ -251,7 +255,7 @@ body.calma #btnCalma{background:#cfe0ec}
   <div class="topbar" id="topbar">
     <button class="volver" id="btnVolver" onclick="Nav.volver()">←</button>
     <button class="volver" id="btnInicio" onclick="Nav.inicio()" style="visibility:hidden">🏠</button>
-    <span style="font-family:var(--fuente-display);color:#fff;font-size:1.2rem">Leo y Juego</span>
+    <span class="titulo-app">Leo y Juego</span>
     <span class="estrellas" id="estrellas">⭐ 0</span>
   </div>
   <div id="pantalla"></div>
@@ -463,6 +467,18 @@ const DEF = {
     {sit:'A Lucía le regalaron el perrito que quería.', preg:'¿Cómo se siente Lucía?', ops:[['🥰',true],['😠',false],['😢',false]]},
     {sit:'Tomás jugó toda la tarde y ahora tiene mucho sueño.', preg:'¿Cómo se siente Tomás?', ops:[['😴',true],['😀',false],['😠',false]]},
     {sit:'A Caro le dieron una sorpresa que no esperaba.', preg:'¿Cómo se siente Caro?', ops:[['😮',true],['😢',false],['😴',false]]}
+  ],
+  // DIBUJOS para pintar con el dedo (motricidad fina). Cada uno es un path SVG
+  // simple; el nene pinta DENTRO del contorno (la pintura no se sale).
+  dibujos: [
+    {nom:'CORAZÓN', emoji:'❤️', path:'M50,88 C20,62 8,42 8,28 C8,14 20,8 30,8 C40,8 48,16 50,24 C52,16 60,8 70,8 C80,8 92,14 92,28 C92,42 80,62 50,88 Z'},
+    {nom:'ESTRELLA', emoji:'⭐', path:'M50,6 L61,38 L95,38 L67,58 L78,90 L50,70 L22,90 L33,58 L5,38 L39,38 Z'},
+    {nom:'CASA', emoji:'🏠', path:'M50,8 L92,42 L80,42 L80,92 L20,92 L20,42 L8,42 Z'},
+    {nom:'PEZ', emoji:'🐟', path:'M15,50 C25,30 55,30 70,50 C55,70 25,70 15,50 Z M70,50 L92,35 L92,65 Z'},
+    {nom:'FLOR', emoji:'🌸', path:'M50,50 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M50,20 a12,12 0 1,1 0,1 M50,80 a12,12 0 1,1 0,-1 M20,50 a12,12 0 1,1 1,0 M80,50 a12,12 0 1,1 -1,0'},
+    {nom:'LUNA', emoji:'🌙', path:'M60,8 A42,42 0 1,0 60,92 A32,32 0 1,1 60,8 Z'},
+    {nom:'GLOBO', emoji:'🎈', path:'M50,8 C70,8 78,26 78,42 C78,62 60,72 50,72 C40,72 22,62 22,42 C22,26 30,8 50,8 Z M50,72 L50,92'},
+    {nom:'SOL', emoji:'☀️', path:'M50,50 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 M50,8 L50,20 M50,80 L50,92 M8,50 L20,50 M80,50 L92,50 M20,20 L28,28 M72,72 L80,80 M80,20 L72,28 M28,72 L20,80'}
   ]
 };
 
@@ -524,7 +540,7 @@ const Banco = {
       if(!this.data._editado){ this.data=this.clonarDefault(); }
       this.data._v=this.VERSION; this.guardar();
     }
-    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina','colores','formas','categorias','queFalta','historias'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
+    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina','colores','formas','categorias','queFalta','historias','dibujos'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
   },
   clonarDefault(){ const d=JSON.parse(JSON.stringify(DEF)); d._v=this.VERSION; return d; },
   guardar(){ localStorage.setItem('leoyjuego-banco', JSON.stringify(this.data)); },
@@ -1370,6 +1386,7 @@ function menuJuegos(){
     <button class="btn-grande c-sol"   onclick="Nav.ir(juegoCategorias)"><span class="emo">🗂️</span>Categorías</button>
     <button class="btn-grande c-cielo" onclick="Nav.ir(juegoQueFalta)"><span class="emo">🧩</span>¿Qué falta?</button>
     <button class="btn-grande c-pasto" onclick="Nav.ir(juegoHistorias)"><span class="emo">💭</span>Historias</button>
+    <button class="btn-grande c-coral" onclick="Nav.ir(juegoPintar)"><span class="emo">🎨</span>Pintar<br>con el dedo</button>
   </div>`;
 }
 
@@ -1774,6 +1791,89 @@ function rondaHistoria(aciertos){
       setTimeout(()=>el.classList.remove('incorrecto'),800);
     }
   };
+}
+
+/* ===================== JUEGO · PINTAR CON EL DEDO =====================
+   Motricidad fina: el nene pinta una figura con el dedo. La pintura queda
+   DENTRO del contorno (se usa la figura como recorte/clip), no se sale. */
+let _pintarIdx=0;
+function juegoPintar(){ _pintarIdx=0; rondaPintar(); }
+function rondaPintar(){
+  const lista=Banco.data.dibujos||DEF.dibujos;
+  const dib=lista[_pintarIdx%lista.length];
+  const colores=(Banco.data.colores||DEF.colores);
+  // color objetivo a usar (se puede cambiar tocando la paleta)
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:6px">
+     <div class="tarjeta" style="gap:10px">
+       <div class="consigna">Pintá el <b>${dib.nom.toLowerCase()}</b> 🎨</div>
+       <div id="lienzoWrap" style="position:relative;width:300px;max-width:86vw;aspect-ratio:1;touch-action:none">
+         <canvas id="lienzo" width="300" height="300" style="position:absolute;inset:0;width:100%;height:100%;border-radius:18px;background:#fff;box-shadow:var(--sombra)"></canvas>
+         <svg id="contorno" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+           <path d="${dib.path}" fill="none" stroke="#cfcfcf" stroke-width="2" stroke-linejoin="round"/>
+         </svg>
+       </div>
+       <div class="paleta" id="paleta">
+         ${colores.map((c,i)=>`<div class="color-pincel ${i===0?'sel':''}" data-c="${c.c}" style="background:${c.c}"></div>`).join('')}
+       </div>
+       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+         <button class="btn-grafismo" onclick="limpiarLienzo()">🧽 Borrar</button>
+         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="listoPintar()">✅ ¡Listo!</button>
+         <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="siguientePintar()">➡️ Otro</button>
+       </div>
+     </div>
+   </div>`;
+  Voz.hablar('Pintá el '+dib.nom.toLowerCase());
+  iniciarLienzo(dib.path);
+}
+
+let _ctx=null, _pintando=false, _colorActual=null, _pathActual='';
+function iniciarLienzo(pathFigura){
+  const canvas=document.getElementById('lienzo');
+  _ctx=canvas.getContext('2d');
+  _pathActual=pathFigura;
+  _colorActual=document.querySelector('.color-pincel.sel')?.dataset.c || '#e63946';
+  // paleta: elegir color
+  document.getElementById('paleta').onclick=e=>{
+    const c=e.target.closest('.color-pincel'); if(!c)return;
+    document.querySelectorAll('.color-pincel').forEach(x=>x.classList.remove('sel'));
+    c.classList.add('sel'); _colorActual=c.dataset.c;
+  };
+  // construir el Path2D de la figura escalado al tamaño del canvas (300 = 100*3)
+  const escala=3;
+  const dibujarTrazo=(x,y)=>{
+    _ctx.save();
+    _ctx.scale(escala,escala);
+    _ctx.clip(new Path2D(pathFigura));   // solo se pinta DENTRO de la figura
+    _ctx.fillStyle=_colorActual;
+    _ctx.beginPath();
+    _ctx.arc(x/escala, y/escala, 7, 0, Math.PI*2);  // pincel redondo
+    _ctx.fill();
+    _ctx.restore();
+  };
+  const pos=ev=>{
+    const r=canvas.getBoundingClientRect();
+    const t=ev.touches?ev.touches[0]:ev;
+    return { x:(t.clientX-r.left)*(canvas.width/r.width), y:(t.clientY-r.top)*(canvas.height/r.height) };
+  };
+  const start=ev=>{ ev.preventDefault(); _pintando=true; const p=pos(ev); dibujarTrazo(p.x,p.y); };
+  const move=ev=>{ if(!_pintando)return; ev.preventDefault(); const p=pos(ev); dibujarTrazo(p.x,p.y); };
+  const end=()=>{ _pintando=false; };
+  canvas.addEventListener('pointerdown',start);
+  canvas.addEventListener('pointermove',move);
+  canvas.addEventListener('pointerup',end);
+  canvas.addEventListener('pointerleave',end);
+  // respaldo touch para WebViews viejos
+  canvas.addEventListener('touchstart',start,{passive:false});
+  canvas.addEventListener('touchmove',move,{passive:false});
+  canvas.addEventListener('touchend',end);
+}
+function limpiarLienzo(){ if(_ctx){ _ctx.clearRect(0,0,300,300); } }
+function siguientePintar(){ _pintarIdx++; rondaPintar(); }
+function listoPintar(){
+  Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Qué lindo te quedó!');
+  if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+  setTimeout(siguientePintar,1400);
 }
 
 /* ===================== MÓDULO 7 · PRONUNCIACIÓN ===================== */
@@ -2623,7 +2723,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

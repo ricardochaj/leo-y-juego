@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 12; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 16; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
@@ -53,7 +53,7 @@ body{
   overflow-x:hidden;
   user-select:none;-webkit-user-select:none;
 }
-#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;padding-top:env(safe-area-inset-top);box-sizing:border-box}
+#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:var(--alto-real,100vh);padding-top:env(safe-area-inset-top);box-sizing:border-box}
 #pantalla{flex:1;display:flex;flex-direction:column}
 #pantalla>.menu-grid{align-content:start}
 
@@ -62,8 +62,8 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .titulo{font-size:2rem;text-align:center;color:var(--tiza);text-shadow:0 3px 0 rgba(0,0,0,.2);margin:10px 0}
 
 /* ====== BARRA SUPERIOR ====== */
-.topbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--cielo-hondo);box-shadow:0 3px 10px rgba(0,0,0,.15);position:relative;z-index:5}
-.topbar .titulo-app{font-family:var(--fuente-display);color:#fff;font-size:1.6rem;letter-spacing:.5px;text-shadow:0 2px 4px rgba(0,0,0,.25);flex:1;text-align:center}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px;background:linear-gradient(135deg,var(--cielo-hondo),var(--uva));box-shadow:0 3px 12px rgba(0,0,0,.2);position:relative;z-index:5}
+.topbar .titulo-app{font-family:var(--fuente-display);color:var(--sol);font-size:2rem;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.3);flex:1;text-align:center;line-height:1}
 .topbar .volver{background:var(--tiza);border:none;border-radius:50%;width:48px;height:48px;font-size:1.5rem;box-shadow:var(--sombra);cursor:pointer}
 .topbar .estrellas{background:var(--sol);color:var(--pizarron);font-weight:800;border-radius:50px;padding:8px 16px;box-shadow:var(--sombra);font-size:1.1rem}
 
@@ -176,6 +176,14 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .num-op.correcto .num-op-cifra{color:#fff}
 .num-op.incorrecto{background:var(--coral);border-color:#d64545;animation:tiembla .3s}
 .num-cifra-grande{font-family:var(--fuente-display);font-size:3rem;color:var(--cielo-hondo);line-height:1}
+/* ====== CONTAR CON DEDITOS (números con manos) ====== */
+.cuenta-dedos{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.grupo-dedos{display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border-radius:16px;padding:10px 8px;box-shadow:var(--sombra);min-width:64px}
+.grupo-dedos.resta{background:#ffeaea}
+.num-dedos{font-family:var(--fuente-display);font-size:1.8rem;color:var(--cielo-hondo);line-height:1}
+.grupo-dedos.resta .num-dedos{color:var(--coral)}
+.deditos{font-size:1.6rem;line-height:1.1;max-width:120px;word-break:break-word}
+.signo-dedos{font-family:var(--fuente-display);font-size:2rem;color:var(--uva);line-height:1}
 /* ====== SECUENCIAS ====== */
 .secuencia{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;background:#f4f8ff;border-radius:18px;padding:14px;width:100%}
 .sec-item{font-size:2.4rem;line-height:1}
@@ -1106,7 +1114,15 @@ function siguienteFonico(){ _fonicoIdx++;
 
 /* ===================== MÓDULO NÚMEROS (sumar, restar, multiplicar) ===================== */
 let _numIdx=0;
-function modNumeros(){ _numIdx=0; rondaNumero(); }
+function modNumeros(){
+  // pequeño menú: contar con objetos (lo de siempre) o con manos (dedos)
+  P.innerHTML=`<h1 class="titulo">➕ Números</h1>
+   <div class="menu-grid" style="padding-bottom:20px">
+     <button class="btn-grande c-uva" onclick="modNumerosObjetos()"><span class="emo">🍎</span>Contar con<br>objetos</button>
+     <button class="btn-grande c-coral" onclick="modManos()"><span class="emo">🖐️</span>Contar con<br>las manos</button>
+   </div>`;
+}
+function modNumerosObjetos(){ _numIdx=0; rondaNumero(); }
 function rondaNumero(){
   const e=Nivel.escalon();
   const obj=UI.azar(Banco.data.contables);
@@ -1196,6 +1212,73 @@ function rondaNumero(){
     }
   };
 }
+
+/* ===================== NÚMEROS · CONTAR CON LAS MANOS =====================
+   Muestra la cuenta con deditos para contar (debajo del 3 -> tres deditos).
+   Suma en amarillo/azul; resta en rojo, para que el nene distinga la operación. */
+function modManos(){ rondaManos(); }
+// muestra N deditos: 0=puño, 2=la V (clara), el resto repite el dedito ☝️
+function deditosEmoji(n){
+  if(n<=0) return '✊';
+  if(n===2) return '✌️';
+  return '☝️'.repeat(n);
+}
+function rondaManos(){
+  const e=Nivel.escalon();
+  const esResta=Math.random()<0.45;
+  let A,B,RES;
+  if(!esResta){
+    // suma con resultado hasta 10 (cabe en deditos), sube un poco con el grado
+    const tope=Math.min(10, 5+e*2);
+    RES=2+Math.floor(Math.random()*(tope-1));
+    A=1+Math.floor(Math.random()*(RES-1)); B=RES-A;
+  }else{
+    A=2+Math.floor(Math.random()*8); B=1+Math.floor(Math.random()*(A-1)); RES=A-B;
+  }
+  const signo=esResta?'−':'+';
+  const palabraOp=esResta?'menos':'más';
+  const claseG=esResta?'grupo-dedos resta':'grupo-dedos';
+  const titulo=esResta?'Sacá los deditos rojos ✋':'Contá todos los deditos 👇';
+  // opciones (3): el resultado + 2 distractores cercanos
+  const set=new Set([RES]); let guard=0;
+  while(set.size<3 && guard++<40){ let d=RES+(Math.floor(Math.random()*5)-2); if(d>=0&&d!==RES)set.add(d); }
+  while(set.size<3) set.add(RES+set.size);
+  const ops=UI.mezclar([...set]);
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:6px">
+     <div class="tarjeta" style="gap:12px">
+       <div class="consigna">${titulo}</div>
+       <div class="cuenta-dedos">
+         <div class="${claseG}"><div class="num-dedos">${A}</div><div class="deditos">${deditosEmoji(A)}</div></div>
+         <div class="signo-dedos" style="${esResta?'color:var(--coral)':''}">${signo}</div>
+         <div class="${claseG}"><div class="num-dedos">${B}</div><div class="deditos">${deditosEmoji(B)}</div></div>
+         <div class="signo-dedos">=</div>
+         <div class="num-dedos" style="font-size:2.4rem">?</div>
+       </div>
+       <button class="btn-sonido" onclick="Voz.hablar('${A} ${palabraOp} ${B}')">🔊 Escuchar</button>
+       <div class="consigna">¿Cuánto da?</div>
+       <div class="num-opciones" id="opsManos">
+         ${ops.map(o=>`<button class="num-op" data-ok="${o===RES}" data-n="${o}"><span class="num-op-cifra">${o}</span></button>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  setTimeout(()=>Voz.hablar(`${A} ${palabraOp} ${B}`),400);
+  document.getElementById('opsManos').onclick=ev=>{
+    const b=ev.target.closest('.num-op'); if(!b||b.dataset.done)return;
+    if(b.dataset.ok==='true'){
+      b.dataset.done=1; b.classList.add('correcto');
+      Voz.hablar(`¡Muy bien! ${A} ${palabraOp} ${B} es ${RES}`);
+      Estado.sumarEstrella(2); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(rondaManos,1800);
+    }else{
+      b.classList.add('incorrecto'); Estado.registrarFallo(esResta?'resta manos':'suma manos');
+      Mascota.animar('Contá los deditos otra vez 👆'); Voz.hablar('Esa no. Contá de nuevo');
+      setTimeout(()=>b.classList.remove('incorrecto'),700);
+    }
+  };
+}
+
 
 /* ===================== MÓDULO 1 · LETRAS ===================== */
 function modLetras(){ rondaLetra(VOCALES.concat(ordenFonico().slice(0,6)), 0, 0); }
@@ -2723,7 +2806,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 12;
+const APP_VERSION = 16;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {
@@ -2769,6 +2852,14 @@ setTimeout(()=>AutoActualizar.revisar(), 3000);
 Estado.cargar();
 Banco.cargar();
 Calma.cargar();
+// Fijar el alto real de la ventana (el WebView calcula mal vh/dvh tras document.write).
+// Usamos window.innerHeight medido por JS, que sí es confiable.
+function fijarAltoReal(){
+  try{ document.documentElement.style.setProperty('--alto-real', window.innerHeight+'px'); }catch(e){}
+}
+fijarAltoReal();
+window.addEventListener('resize', fijarAltoReal);
+window.addEventListener('orientationchange', ()=>setTimeout(fijarAltoReal,200));
 // Despertar el motor de voz en la primera interacción (requerido en Android)
 document.addEventListener('pointerdown',()=>Voz.despertar(),{once:true});
 document.addEventListener('click',()=>Voz.despertar(),{once:true});

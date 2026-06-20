@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 18; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 19; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
@@ -200,6 +200,32 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .cuenta-grande{font-family:var(--fuente-display);font-size:2.6rem;color:var(--cielo-hondo);display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .cuenta-grande .op-suma{color:var(--pasto-hondo)}
 .cuenta-grande .op-resta{color:var(--coral)}
+/* ====== COMPARAR CANTIDADES ====== */
+.comp-fila{display:flex;align-items:stretch;justify-content:center;gap:12px;width:100%}
+.comp-grupo{flex:1;background:#f4f8ff;border-radius:18px;padding:14px 8px;font-size:1.7rem;line-height:1.3;word-break:break-word;cursor:pointer;border:4px solid transparent;transition:transform .1s;display:flex;align-items:center;justify-content:center;min-height:96px}
+.comp-grupo:active{transform:scale(.95)}
+.comp-grupo.correcto{background:var(--pasto);border-color:var(--pasto-hondo)}
+.comp-grupo.incorrecto{background:var(--coral);border-color:#d64545;animation:tiembla .3s}
+.comp-vs{font-family:var(--fuente-display);font-size:2.2rem;color:var(--uva);align-self:center}
+/* ====== NÚMERO QUE FALTA ====== */
+.faltan-fila{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:#f4f8ff;border-radius:18px;padding:16px;width:100%}
+.faltan-cel{font-family:var(--fuente-display);font-size:2.2rem;color:var(--cielo-hondo);min-width:46px;text-align:center}
+.faltan-cel.hueco{color:var(--uva);border-bottom:5px solid var(--uva)}
+/* ====== SIMÓN / MEMORIA DE LUCES ====== */
+.simon-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:320px;margin:0 auto}
+.simon-pad{aspect-ratio:1;border-radius:22px;cursor:pointer;opacity:.55;transition:opacity .15s,transform .1s;box-shadow:var(--sombra);border:none}
+.simon-pad.on{opacity:1;transform:scale(1.05)}
+.simon-pad:active{transform:scale(.96)}
+.simon-rojo{background:#ff6b6b}.simon-verde{background:#51cf66}.simon-azul{background:#4dabf7}.simon-amarillo{background:#ffd43b}
+.simon-nivel{font-family:var(--fuente-display);font-size:1.4rem;color:#fff;font-weight:800}
+/* ====== PARTE DEL DÍA ====== */
+.dia-escena{font-size:5rem;line-height:1;margin:6px 0}
+.dia-ops{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.dia-op{background:#fff;border:3px solid #eee;border-radius:18px;padding:14px 18px;cursor:pointer;box-shadow:var(--sombra);font-family:var(--fuente-display);font-size:1.3rem;color:var(--pizarron);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px;transition:transform .1s}
+.dia-op:active{transform:scale(.94)}
+.dia-op .dia-emo{font-size:2rem}
+.dia-op.correcto{background:var(--pasto);border-color:var(--pasto-hondo);color:#fff}
+.dia-op.incorrecto{background:var(--coral);border-color:#d64545;animation:tiembla .3s}
 .signo-dedos{font-family:var(--fuente-display);font-size:2rem;color:var(--uva);line-height:1}
 /* ====== SECUENCIAS ====== */
 .secuencia{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;background:#f4f8ff;border-radius:18px;padding:14px;width:100%}
@@ -1165,6 +1191,8 @@ function modNumeros(){
      <button class="btn-grande c-uva" onclick="modNumerosObjetos()"><span class="emo">🍎</span>Contar con<br>objetos</button>
      <button class="btn-grande c-coral" onclick="modManos()"><span class="emo">🖐️</span>Contar con<br>las manos</button>
      <button class="btn-grande c-pasto" onclick="modRecta()"><span class="emo">🐸</span>Saltos en la<br>recta (sumar/restar)</button>
+     <button class="btn-grande c-sol" onclick="modComparar()"><span class="emo">⚖️</span>¿Cuál tiene<br>más?</button>
+     <button class="btn-grande c-cielo" onclick="modFaltan()"><span class="emo">🔢</span>El número<br>que falta</button>
    </div>`;
 }
 function modNumerosObjetos(){ _numIdx=0; rondaNumero(); }
@@ -1430,6 +1458,233 @@ function rondaRecta(){
 }
 
 
+/* ===================== NÚMEROS · COMPARAR CANTIDADES =====================
+   Dos grupos de objetos. El nene toca el que tiene MÁS (o el que tiene MENOS).
+   Trabaja el sentido del número, base previa a sumar/restar bien. */
+function modComparar(){ rondaComparar(); }
+function rondaComparar(){
+  const e=Nivel.escalon();
+  const tope=[5,7,9,12,15][e];
+  const obj=UI.azar(Banco.data.contables);
+  let a=1+Math.floor(Math.random()*tope), b=1+Math.floor(Math.random()*tope);
+  while(a===b){ b=1+Math.floor(Math.random()*tope); }      // que nunca sean iguales
+  const buscarMas=Math.random()<0.6;                       // a veces pide "menos"
+  const ganadora = buscarMas ? (a>b?'A':'B') : (a<b?'A':'B');
+  const titulo = buscarMas ? '👆 Tocá el grupo que tiene MÁS' : '👆 Tocá el grupo que tiene MENOS';
+  const fila=n=>obj.repeat(n);
+
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:8px">
+     <div class="tarjeta" style="gap:14px">
+       <div class="consigna">${titulo}</div>
+       <div class="comp-fila">
+         <div class="comp-grupo" data-g="A" data-ok="${ganadora==='A'}">${fila(a)}</div>
+         <div class="comp-vs">vs</div>
+         <div class="comp-grupo" data-g="B" data-ok="${ganadora==='B'}">${fila(b)}</div>
+       </div>
+       <button class="btn-sonido" id="btnComp">🔊 Escuchar</button>
+     </div>
+   </div>`;
+
+  const decir=()=>Voz.hablar(buscarMas?'¿Cuál tiene más?':'¿Cuál tiene menos?');
+  document.getElementById('btnComp').onclick=decir;
+  setTimeout(decir,450);
+
+  P.querySelector('.comp-fila').onclick=ev=>{
+    const g=ev.target.closest('.comp-grupo'); if(!g||g.dataset.done)return;
+    if(g.dataset.ok==='true'){
+      g.dataset.done=1; g.classList.add('correcto');
+      Voz.hablar(`¡Muy bien! Ese grupo tiene ${g.dataset.g==='A'?a:b}`);
+      Estado.sumarEstrella(); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(rondaComparar,1700);
+    }else{
+      g.classList.add('incorrecto'); Estado.registrarFallo('comparar');
+      const cant=g.dataset.g==='A'?a:b;
+      Mascota.animar('Contá de nuevo 👆'); Voz.hablar(`Ese tiene ${cant}. Mirá bien y probá otra vez`);
+      setTimeout(()=>g.classList.remove('incorrecto'),700);
+    }
+  };
+}
+
+/* ===================== NÚMEROS · EL NÚMERO QUE FALTA =====================
+   Una secuencia con un hueco: 3, 4, _, 6. El nene elige el que va.
+   Trabaja la serie numérica (contar de a 1, y de a 2 en grados altos). */
+function modFaltan(){ rondaFaltan(); }
+function rondaFaltan(){
+  const e=Nivel.escalon();
+  const paso = e>=3 && Math.random()<0.5 ? 2 : 1;          // de a 2 en grados altos
+  const largo=[4,4,5,5,5][e];
+  const topeInicio=[6,10,15,30,50][e];
+  const inicio=1+Math.floor(Math.random()*topeInicio);
+  const serie=Array.from({length:largo},(_,i)=>inicio+i*paso);
+  const hueco=1+Math.floor(Math.random()*(largo-2));        // nunca el primero ni el último
+  const correcto=serie[hueco];
+
+  // opciones: correcto + 2 vecinos
+  const set=new Set([correcto]); let guard=0;
+  while(set.size<3 && guard++<40){ let d=correcto+(Math.floor(Math.random()*5)-2)*paso; if(d>0&&d!==correcto)set.add(d); }
+  while(set.size<3){ set.add(correcto+set.size*paso); }
+  const ops=UI.mezclar([...set]);
+
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:8px">
+     <div class="tarjeta" style="gap:16px">
+       <div class="consigna">🔢 ¿Qué número falta?</div>
+       <div class="faltan-fila">
+         ${serie.map((n,i)=> i===hueco
+           ? `<span class="faltan-cel hueco">?</span>`
+           : `<span class="faltan-cel">${n}</span>`).join('<span style="color:#bbb">›</span>')}
+       </div>
+       <button class="btn-sonido" id="btnFaltan">🔊 Escuchar</button>
+       <div class="consigna">Tocá el número que va 👇</div>
+       <div class="num-opciones" id="opsFaltan">
+         ${ops.map(o=>`<button class="num-op" data-ok="${o===correcto}" data-n="${o}"><span class="num-op-cifra">${o}</span></button>`).join('')}
+       </div>
+     </div>
+   </div>`;
+
+  const leer=()=>{ const dicho=serie.map((n,i)=>i===hueco?'mmm':n).join(', '); Voz.hablar(dicho); };
+  document.getElementById('btnFaltan').onclick=leer;
+  setTimeout(leer,450);
+
+  document.getElementById('opsFaltan').onclick=ev=>{
+    const b=ev.target.closest('.num-op'); if(!b||b.dataset.done)return;
+    if(b.dataset.ok==='true'){
+      b.dataset.done=1; b.classList.add('correcto');
+      Voz.hablar(`¡Muy bien! Es el ${correcto}`);
+      Estado.sumarEstrella(2); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(rondaFaltan,1700);
+    }else{
+      b.classList.add('incorrecto'); Estado.registrarFallo('numero falta');
+      Mascota.animar('Contá la serie otra vez 🔢'); Voz.hablar(`Esa no. El número que falta es ${correcto}. Probá de nuevo`);
+      setTimeout(()=>b.classList.remove('incorrecto'),700);
+    }
+  };
+}
+
+/* ===================== JUEGO · MEMORIA DE LUCES (tipo Simón) =====================
+   Se ilumina una secuencia que el nene tiene que repetir tocando.
+   Cada acierto agrega un paso. Trabaja atención y memoria de trabajo. */
+const SIMON_PADS=[
+  {id:0,cls:'simon-rojo',nota:'Do'},
+  {id:1,cls:'simon-verde',nota:'Mi'},
+  {id:2,cls:'simon-azul',nota:'Sol'},
+  {id:3,cls:'simon-amarillo',nota:'La'},
+];
+let _simonSec=[], _simonPaso=0, _simonBloqueo=false, _simonNivel=0;
+function juegoSimon(){
+  _simonSec=[]; _simonNivel=0;
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:8px">
+     <div class="tarjeta" style="gap:16px">
+       <div class="consigna">🎵 Mirá y repetí la secuencia</div>
+       <div class="simon-nivel" style="color:var(--pizarron)">Nivel <span id="simonN">1</span></div>
+       <div class="simon-grid" id="simonGrid">
+         ${SIMON_PADS.map(p=>`<button class="simon-pad ${p.cls}" data-id="${p.id}"></button>`).join('')}
+       </div>
+       <button class="btn-sonido" id="simonRep">▶️ Empezar</button>
+     </div>
+   </div>`;
+  document.getElementById('simonRep').onclick=()=>{ if(!_simonBloqueo) simonAvanzar(); };
+  document.getElementById('simonGrid').onclick=simonToque;
+  setTimeout(simonAvanzar,600);
+}
+function simonBeep(id){
+  const pad=document.querySelector(`.simon-pad[data-id="${id}"]`);
+  if(!pad)return; pad.classList.add('on');
+  try{ Voz.hablar(SIMON_PADS[id].nota); }catch(e){}
+  setTimeout(()=>pad.classList.remove('on'),380);
+}
+function simonAvanzar(){
+  _simonSec.push(UI.azar([0,1,2,3]));
+  _simonNivel=_simonSec.length;
+  const nEl=document.getElementById('simonN'); if(nEl) nEl.textContent=_simonNivel;
+  _simonPaso=0; _simonBloqueo=true;
+  let i=0;
+  const reproducir=()=>{
+    if(i>=_simonSec.length){ _simonBloqueo=false; Mascota.animar('Ahora repetí 👆'); return; }
+    simonBeep(_simonSec[i]); i++;
+    setTimeout(reproducir,650);
+  };
+  setTimeout(reproducir,400);
+}
+function simonToque(ev){
+  if(_simonBloqueo)return;
+  const pad=ev.target.closest('.simon-pad'); if(!pad)return;
+  const id=parseInt(pad.dataset.id,10);
+  pad.classList.add('on'); setTimeout(()=>pad.classList.remove('on'),200);
+  try{ Voz.hablar(SIMON_PADS[id].nota); }catch(e){}
+  if(id===_simonSec[_simonPaso]){
+    _simonPaso++;
+    if(_simonPaso===_simonSec.length){           // completó la secuencia
+      _simonBloqueo=true;
+      Estado.sumarEstrella(); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(simonAvanzar,1100);
+    }
+  }else{                                          // se equivocó: vuelve a mostrar desde el nivel 1 actual
+    _simonBloqueo=true; Estado.registrarFallo('simon');
+    Mascota.animar('Casi. Mirá otra vez 👀'); Voz.hablar('Casi. Mirá la secuencia otra vez');
+    _simonSec.pop(); if(_simonSec.length<1) _simonSec=[]; // baja un escalón, no reinicia del todo
+    setTimeout(()=>{ if(_simonSec.length===0) simonAvanzar(); else { _simonPaso=0; _simonBloqueo=true; let i=0;
+      const rep=()=>{ if(i>=_simonSec.length){_simonBloqueo=false;return;} simonBeep(_simonSec[i]); i++; setTimeout(rep,650); }; setTimeout(rep,300);
+    } },1200);
+  }
+}
+
+/* ===================== JUEGO · MAÑANA, TARDE Y NOCHE =====================
+   Muestra una escena (sol, almuerzo, luna...) y el nene elige el momento del día.
+   Orienta en el tiempo: muy útil para rutina y para chicos con TEA. */
+const DIA_ESCENAS=[
+  {emo:'🌅', mom:'mañana', pista:'El sol sale y nos despertamos'},
+  {emo:'🥣', mom:'mañana', pista:'Tomamos el desayuno'},
+  {emo:'☀️', mom:'tarde',  pista:'El sol está bien alto'},
+  {emo:'🍽️', mom:'tarde',  pista:'Es la hora del almuerzo'},
+  {emo:'🌇', mom:'tarde',  pista:'El sol se empieza a esconder'},
+  {emo:'🌙', mom:'noche',  pista:'Salen la luna y las estrellas'},
+  {emo:'🛌', mom:'noche',  pista:'Nos vamos a dormir'},
+  {emo:'⭐', mom:'noche',  pista:'El cielo está oscuro'},
+];
+const DIA_OPC=[{m:'mañana',e:'🌅'},{m:'tarde',e:'☀️'},{m:'noche',e:'🌙'}];
+function juegoDia(){ rondaDia(); }
+function rondaDia(){
+  const esc=UI.azar(DIA_ESCENAS);
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:8px">
+     <div class="tarjeta" style="gap:14px">
+       <div class="consigna">¿Qué momento del día es?</div>
+       <div class="dia-escena">${esc.emo}</div>
+       <div class="consigna" style="font-size:1.05rem;color:var(--cielo-hondo)">${esc.pista}</div>
+       <button class="btn-sonido" id="btnDia">🔊 Escuchar</button>
+       <div class="dia-ops" id="opsDia">
+         ${DIA_OPC.map(o=>`<button class="dia-op" data-ok="${o.m===esc.mom}" data-m="${o.m}">
+           <span class="dia-emo">${o.e}</span><span>${o.m}</span></button>`).join('')}
+       </div>
+     </div>
+   </div>`;
+  const leer=()=>Voz.hablar(esc.pista);
+  document.getElementById('btnDia').onclick=leer;
+  setTimeout(leer,450);
+
+  document.getElementById('opsDia').onclick=ev=>{
+    const b=ev.target.closest('.dia-op'); if(!b||b.dataset.done)return;
+    if(b.dataset.ok==='true'){
+      b.dataset.done=1; b.classList.add('correcto');
+      Voz.hablar(`¡Muy bien! Es de ${esc.mom}`);
+      Estado.sumarEstrella(); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(rondaDia,1700);
+    }else{
+      b.classList.add('incorrecto'); Estado.registrarFallo('parte dia');
+      Mascota.animar('Mirá la pista otra vez 👀'); Voz.hablar(`Esa no. Es de ${esc.mom}. Probá de nuevo`);
+      setTimeout(()=>b.classList.remove('incorrecto'),700);
+    }
+  };
+}
+
+
 /* ===================== MÓDULO 1 · LETRAS ===================== */
 function modLetras(){ rondaLetra(VOCALES.concat(ordenFonico().slice(0,6)), 0, 0); }
 function rondaLetra(set, aciertos, intento){
@@ -1620,6 +1875,8 @@ function menuJuegos(){
     <button class="btn-grande c-cielo" onclick="Nav.ir(juegoQueFalta)"><span class="emo">🧩</span>¿Qué falta?</button>
     <button class="btn-grande c-pasto" onclick="Nav.ir(juegoHistorias)"><span class="emo">💭</span>Historias</button>
     <button class="btn-grande c-coral" onclick="Nav.ir(juegoPintar)"><span class="emo">🎨</span>Pintar<br>con el dedo</button>
+    <button class="btn-grande c-uva" onclick="Nav.ir(juegoSimon)"><span class="emo">🎵</span>Memoria<br>de luces</button>
+    <button class="btn-grande c-sol" onclick="Nav.ir(juegoDia)"><span class="emo">🕐</span>Mañana,<br>tarde y noche</button>
   </div>`;
 }
 
@@ -2961,7 +3218,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

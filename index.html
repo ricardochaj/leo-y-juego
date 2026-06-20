@@ -6,17 +6,35 @@
 <title>Leo y Juego</title>
 <script>
 /* APLICAR ACTUALIZACIÓN: si en una apertura anterior se descargó una versión
-   más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
+   más nueva del index.html, usarla en lugar de esta.
+
+   POR QUÉ ASÍ (historia del bug): antes se usaba document.write dentro del <head>.
+   Eso causaba DOS problemas: (1) al correr durante el parseo del documento, no
+   reemplazaba sino que ANIDABA el HTML nuevo -> se veían dos barras "Leo y Juego"
+   y un espacio en blanco gigante; (2) el contexto de JavaScript no se limpiaba, así
+   que las constantes de la versión vieja (VOCALES, etc.) chocaban con las nuevas.
+
+   SOLUCIÓN: cargamos el HTML nuevo en un Blob y navegamos a él con location.replace.
+   Eso le da a la versión nueva una página y un contexto JS completamente frescos:
+   no se duplica nada y no hay choques de variables. */
 (function(){
   try{
     var V_ACTUAL = 20; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
-    if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
+    // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
+    var yaEsBlob = (location.protocol === 'blob:') || sessionStorage.getItem('__leoActualizado');
+    if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado && !yaEsBlob){
       window.__yaAplicado = true;
-      document.open();
-      document.write(htmlGuardado);
-      document.close();
+      window.__actualizando = true;      // que no arranque la app vieja
+      if(window.stop) try{ window.stop(); }catch(e){}
+      sessionStorage.setItem('__leoActualizado','1');
+      var blob = new Blob([htmlGuardado], {type:'text/html'});
+      var url = URL.createObjectURL(blob);
+      location.replace(url);             // navega a la versión nueva, contexto limpio
+    } else {
+      // arrancó la versión definitiva: limpiar la marca para futuras actualizaciones
+      sessionStorage.removeItem('__leoActualizado');
     }
   }catch(e){}
 })();
@@ -3272,6 +3290,9 @@ const AutoActualizar = {
 setTimeout(()=>AutoActualizar.revisar(), 3000);
 
 /* ===================== ARRANQUE ===================== */
+// Si hay una actualización pendiente de aplicarse (se aplica en el evento 'load'),
+// esta versión vieja no debe arrancar: dejaría el menú viejo pintado un instante.
+if(!window.__actualizando){
 Estado.cargar();
 Estado.registrarVisita();
 Banco.cargar();
@@ -3317,6 +3338,7 @@ setTimeout(()=>{
     Estado.data.avisoVoz=true; Estado.guardar();
   }
 },2500);
+} // fin del if(!window.__actualizando) — guarda de actualización pendiente
 </script>
 </body>
 </html>

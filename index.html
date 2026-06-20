@@ -62,19 +62,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap');
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html,body{margin:0;height:100%}
+html,body{margin:0;height:100%;height:100dvh;overflow:hidden}
 body{
   font-family:var(--fuente-cuerpo);
   color:var(--pizarron);
   background:linear-gradient(180deg,var(--cielo) 0%,#8ed0ff 60%,var(--pasto) 100%);
   background-attachment:fixed;
-  overflow-x:hidden;
+  overflow:hidden;
+  position:fixed;width:100%;
   user-select:none;-webkit-user-select:none;
 }
-/* Alto exacto de la ventana (medido por JS en --alto-real). Antes era min-height,
-   que permitía que el contenedor creciera de más y dejara espacio abajo en el APK. */
-#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;height:var(--alto-real,100vh);max-height:var(--alto-real,100vh);padding-top:env(safe-area-inset-top);box-sizing:border-box;overflow:hidden}
-#pantalla{flex:1;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* Alto de la ventana. Usamos 100dvh (dynamic viewport height): en el WebView de
+   Android respeta correctamente la barra de estado y la de navegación del sistema,
+   a diferencia de medir innerHeight por JS (que en muchos dispositivos mide de MÁS
+   y dejaba un vacío scrolleable abajo en TODAS las pantallas). El --alto-real
+   medido por JS queda solo como respaldo para WebViews viejos sin soporte de dvh. */
+#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;height:var(--alto-real,100vh);height:100dvh;max-height:100dvh;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box;overflow:hidden}
+#pantalla{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #pantalla>.menu-grid{align-content:start}
 
 /* ====== TIPOGRAFÍA / TÍTULOS ====== */
@@ -3303,8 +3307,12 @@ Calma.cargar();
 // primer innerHeight suele venir más grande de lo real (eso dejaba espacio sobrante abajo).
 function fijarAltoReal(){
   try{
-    var h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
-    if(!h || h<200) h = document.documentElement.clientHeight || window.innerHeight;
+    // clientHeight del documento suele ser el área visible real (sin barras del
+    // sistema) en Android; lo preferimos a innerHeight, que a veces mide de más.
+    var h = document.documentElement.clientHeight || 0;
+    var vv = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
+    if(vv && (!h || vv < h)) h = vv;          // si visualViewport es menor, es el real
+    if(!h || h<200) h = window.innerHeight;   // último recurso
     document.documentElement.style.setProperty('--alto-real', h+'px');
   }catch(e){}
 }

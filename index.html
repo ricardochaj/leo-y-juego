@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 19; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 20; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
@@ -44,7 +44,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap');
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html,body{margin:0}
+html,body{margin:0;height:100%}
 body{
   font-family:var(--fuente-cuerpo);
   color:var(--pizarron);
@@ -53,8 +53,10 @@ body{
   overflow-x:hidden;
   user-select:none;-webkit-user-select:none;
 }
-#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:var(--alto-real,100vh);padding-top:env(safe-area-inset-top);box-sizing:border-box}
-#pantalla{flex:1;display:flex;flex-direction:column}
+/* Alto exacto de la ventana (medido por JS en --alto-real). Antes era min-height,
+   que permitía que el contenedor creciera de más y dejara espacio abajo en el APK. */
+#app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;height:var(--alto-real,100vh);max-height:var(--alto-real,100vh);padding-top:env(safe-area-inset-top);box-sizing:border-box;overflow:hidden}
+#pantalla{flex:1;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #pantalla>.menu-grid{align-content:start}
 
 /* ====== TIPOGRAFÍA / TÍTULOS ====== */
@@ -71,14 +73,23 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;padding-bottom:80px}
 .btn-grande{
   border:none;border-radius:var(--redondo);padding:22px 10px;font-size:1.15rem;font-weight:800;
-  color:var(--tiza);box-shadow:var(--sombra);cursor:pointer;display:flex;flex-direction:column;
+  color:#fff;box-shadow:var(--sombra);cursor:pointer;display:flex;flex-direction:column;
   align-items:center;gap:8px;transition:transform .08s;line-height:1.1;text-align:center;
+  position:relative;overflow:hidden;text-shadow:0 2px 3px rgba(0,0,0,.22);
 }
-.btn-grande .emo{font-size:2.6rem}
-.btn-grande:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.18)}
-.c-cielo{background:var(--cielo-hondo)} .c-sol{background:var(--sol-hondo)}
-.c-pasto{background:var(--pasto-hondo)} .c-coral{background:var(--coral)}
-.c-uva{background:var(--uva)} .c-pizarron{background:var(--pizarron)}
+/* brillo superior tipo caramelo, hace los botones más vivos y atractivos */
+.btn-grande::before{content:"";position:absolute;top:0;left:0;right:0;height:42%;
+  background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,0));
+  border-radius:var(--redondo) var(--redondo) 50% 50%/var(--redondo) var(--redondo) 22px 22px;pointer-events:none}
+.btn-grande .emo{font-size:2.6rem;position:relative;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
+.btn-grande:active{transform:translateY(3px) scale(.98);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+/* Degradados vibrantes por color (mismos nombres de clase, no rompe nada) */
+.c-cielo{background:linear-gradient(155deg,#5bb8ff,#1f6fd6)}
+.c-sol{background:linear-gradient(155deg,#ffe14d,#f5932a);color:#5a3d00;text-shadow:0 1px 1px rgba(255,255,255,.4)}
+.c-pasto{background:linear-gradient(155deg,#5fe08a,#1f9d4d)}
+.c-coral{background:linear-gradient(155deg,#ff8e8e,#ef4f4f)}
+.c-uva{background:linear-gradient(155deg,#b98cff,#7c43e8)}
+.c-pizarron{background:linear-gradient(155deg,#3d6575,#1d3a45)}
 
 /* ====== TARJETA DE ACTIVIDAD ====== */
 .escena{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:18px;text-align:center}
@@ -162,7 +173,7 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .oculto{display:none!important}
 
 /* ====== MÓDULO NÚMEROS ====== */
-.num-cuenta{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:#f4f8ff;border-radius:18px;padding:14px;width:100%;min-height:80px}
+.num-cuenta{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:linear-gradient(135deg,#eaf3ff,#f3ecff);border-radius:18px;padding:14px;width:100%;min-height:80px}
 .num-grupo{font-size:1.8rem;line-height:1.1;max-width:130px;text-align:center}
 .num-signo{font-family:var(--fuente-display);font-size:2.2rem;color:var(--uva);font-weight:800}
 .tachado{position:relative;opacity:.45}
@@ -202,13 +213,13 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .cuenta-grande .op-resta{color:var(--coral)}
 /* ====== COMPARAR CANTIDADES ====== */
 .comp-fila{display:flex;align-items:stretch;justify-content:center;gap:12px;width:100%}
-.comp-grupo{flex:1;background:#f4f8ff;border-radius:18px;padding:14px 8px;font-size:1.7rem;line-height:1.3;word-break:break-word;cursor:pointer;border:4px solid transparent;transition:transform .1s;display:flex;align-items:center;justify-content:center;min-height:96px}
+.comp-grupo{flex:1;background:linear-gradient(135deg,#eaf3ff,#f3ecff);border-radius:18px;padding:14px 8px;font-size:1.7rem;line-height:1.3;word-break:break-word;cursor:pointer;border:4px solid transparent;transition:transform .1s;display:flex;align-items:center;justify-content:center;min-height:96px}
 .comp-grupo:active{transform:scale(.95)}
 .comp-grupo.correcto{background:var(--pasto);border-color:var(--pasto-hondo)}
 .comp-grupo.incorrecto{background:var(--coral);border-color:#d64545;animation:tiembla .3s}
 .comp-vs{font-family:var(--fuente-display);font-size:2.2rem;color:var(--uva);align-self:center}
 /* ====== NÚMERO QUE FALTA ====== */
-.faltan-fila{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:#f4f8ff;border-radius:18px;padding:16px;width:100%}
+.faltan-fila{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:linear-gradient(135deg,#eaf3ff,#f3ecff);border-radius:18px;padding:16px;width:100%}
 .faltan-cel{font-family:var(--fuente-display);font-size:2.2rem;color:var(--cielo-hondo);min-width:46px;text-align:center}
 .faltan-cel.hueco{color:var(--uva);border-bottom:5px solid var(--uva)}
 /* ====== SIMÓN / MEMORIA DE LUCES ====== */
@@ -3218,7 +3229,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 19;
+const APP_VERSION = 20;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {
@@ -3266,13 +3277,23 @@ Estado.registrarVisita();
 Banco.cargar();
 Calma.cargar();
 // Fijar el alto real de la ventana (el WebView calcula mal vh/dvh tras document.write).
-// Usamos window.innerHeight medido por JS, que sí es confiable.
+// Medimos por JS con la fuente más confiable y RE-medimos varias veces, porque tras
+// document.write el WebView de Android tarda en acomodar la barra de navegación y el
+// primer innerHeight suele venir más grande de lo real (eso dejaba espacio sobrante abajo).
 function fijarAltoReal(){
-  try{ document.documentElement.style.setProperty('--alto-real', window.innerHeight+'px'); }catch(e){}
+  try{
+    var h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
+    if(!h || h<200) h = document.documentElement.clientHeight || window.innerHeight;
+    document.documentElement.style.setProperty('--alto-real', h+'px');
+  }catch(e){}
 }
 fijarAltoReal();
+// Re-medir en los primeros instantes (cuando el viewport ya se estabilizó).
+[60,200,500,1000].forEach(function(t){ setTimeout(fijarAltoReal,t); });
+window.addEventListener('load', fijarAltoReal);
 window.addEventListener('resize', fijarAltoReal);
-window.addEventListener('orientationchange', ()=>setTimeout(fijarAltoReal,200));
+if(window.visualViewport){ window.visualViewport.addEventListener('resize', fijarAltoReal); }
+window.addEventListener('orientationchange', ()=>setTimeout(fijarAltoReal,300));
 // Despertar el motor de voz en la primera interacción (requerido en Android)
 document.addEventListener('pointerdown',()=>Voz.despertar(),{once:true});
 document.addEventListener('click',()=>Voz.despertar(),{once:true});

@@ -9,7 +9,7 @@
    más nueva del index.html, usarla en lugar de esta. Va PRIMERO, antes de todo. */
 (function(){
   try{
-    var V_ACTUAL = 16; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 18; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     if(htmlGuardado && vGuardada>V_ACTUAL && !window.__yaAplicado){
@@ -183,6 +183,23 @@ h1,h2,h3,.btn-grande,.letra-grande{font-family:var(--fuente-display)}
 .num-dedos{font-family:var(--fuente-display);font-size:1.8rem;color:var(--cielo-hondo);line-height:1}
 .grupo-dedos.resta .num-dedos{color:var(--coral)}
 .deditos{font-size:1.6rem;line-height:1.1;max-width:120px;word-break:break-word}
+/* ====== RECTA NUMÉRICA (saltos) ====== */
+.recta-wrap{width:100%;overflow-x:auto;padding:8px 2px 4px;-webkit-overflow-scrolling:touch}
+.recta{position:relative;display:flex;align-items:flex-end;gap:0;min-width:max-content;margin:0 auto;padding-top:54px}
+.recta .nodo{position:relative;width:46px;flex:0 0 46px;display:flex;flex-direction:column;align-items:center}
+.recta .linea{position:absolute;top:78px;left:23px;right:0;height:6px;background:var(--cielo);border-radius:3px;z-index:0}
+.recta .punto{width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid var(--cielo);z-index:1;display:flex;align-items:center;justify-content:center}
+.recta .punto.ini{border-color:var(--uva);background:var(--uva)}
+.recta .punto.fin{border-color:var(--pasto);background:var(--pasto)}
+.recta .etq{font-family:var(--fuente-display);font-size:1.2rem;color:var(--pizarron);margin-top:6px}
+.recta .rana{position:absolute;top:0;font-size:2rem;transition:left .45s cubic-bezier(.34,1.4,.5,1);z-index:3;transform:translateX(-50%)}
+.recta .arco{position:absolute;top:34px;height:36px;border-top:4px dashed var(--coral);border-radius:50%/100% 100% 0 0;z-index:2;pointer-events:none;opacity:0;transition:opacity .3s}
+.recta .arco.ver{opacity:1}
+.recta.resta .arco{border-color:var(--coral)}
+.recta.suma .arco{border-color:var(--pasto-hondo)}
+.cuenta-grande{font-family:var(--fuente-display);font-size:2.6rem;color:var(--cielo-hondo);display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.cuenta-grande .op-suma{color:var(--pasto-hondo)}
+.cuenta-grande .op-resta{color:var(--coral)}
 .signo-dedos{font-family:var(--fuente-display);font-size:2rem;color:var(--uva);line-height:1}
 /* ====== SECUENCIAS ====== */
 .secuencia{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;background:#f4f8ff;border-radius:18px;padding:14px;width:100%}
@@ -596,19 +613,46 @@ const MUNDOS = [
 
 const MEDALLAS = [
   {id:'primera', ico:'🌟', txt:'Primera estrella', meta:1},
+  {id:'cinco',   ico:'⭐', txt:'5 estrellas',      meta:5},
   {id:'diez',    ico:'🏅', txt:'10 estrellas',     meta:10},
+  {id:'veinte',  ico:'🎖️', txt:'20 estrellas',     meta:20},
   {id:'treinta', ico:'🏆', txt:'30 estrellas',     meta:30},
+  {id:'cincuenta',ico:'🥇',txt:'50 estrellas',     meta:50},
+  {id:'setenta', ico:'💎', txt:'75 estrellas',     meta:75},
   {id:'cien',    ico:'👑', txt:'100 estrellas',    meta:100},
+];
+/* Medallas por racha de días seguidos */
+const MEDALLAS_RACHA = [
+  {id:'r3',  ico:'🔥', txt:'3 días seguidos',  meta:3},
+  {id:'r7',  ico:'🔥', txt:'7 días seguidos',  meta:7},
+  {id:'r15', ico:'🔥', txt:'15 días seguidos', meta:15},
 ];
 
 /* ---------- ESTADO + PERSISTENCIA (localStorage) ---------- */
 const Estado = {
-  data:{ nombre:'', edad:6, grado:'1°', estrellas:0, mundos:{}, fallos:{}, tiempo:0, mascota:'🐶', voz:'', pinPadres:'', modoFonico:'aleatorio', ajustesSilaba:{}, vozLang:'es-US' },
+  data:{ nombre:'', edad:6, grado:'1°', estrellas:0, mundos:{}, fallos:{}, tiempo:0, mascota:'🐶', voz:'', pinPadres:'', modoFonico:'aleatorio', ajustesSilaba:{}, vozLang:'es-US', racha:0, rachaMax:0, ultimoDia:'' },
   cargar(){ try{ const s=localStorage.getItem('leoyjuego'); if(s) this.data=JSON.parse(s);}catch(e){} },
   guardar(){ localStorage.setItem('leoyjuego', JSON.stringify(this.data)); },
   sumarEstrella(n=1){ this.data.estrellas+=n; this.guardar(); UI.refrescarEstrellas(); },
   avanzarMundo(id,pct){ const m=this.data.mundos[id]||0; if(pct>m) this.data.mundos[id]=pct; this.guardar(); },
   registrarFallo(clave){ this.data.fallos[clave]=(this.data.fallos[clave]||0)+1; this.guardar(); },
+  registrarVisita(){
+    // Cuenta días seguidos que se abre la app. No depende de la hora, solo de la fecha.
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const hoyTxt = hoy.toISOString().slice(0,10);
+    if(this.data.ultimoDia === hoyTxt) return; // ya contado hoy
+    if(this.data.ultimoDia){
+      const ant = new Date(this.data.ultimoDia+'T00:00:00');
+      const difDias = Math.round((hoy - ant)/86400000);
+      if(difDias === 1) this.data.racha = (this.data.racha||0) + 1; // día siguiente: sigue la racha
+      else this.data.racha = 1; // se cortó: vuelve a empezar
+    } else {
+      this.data.racha = 1; // primer día
+    }
+    if(this.data.racha > (this.data.rachaMax||0)) this.data.rachaMax = this.data.racha;
+    this.data.ultimoDia = hoyTxt;
+    this.guardar();
+  },
 };
 
 /* ---------- NIVEL: dificultad según el grado del nene ----------
@@ -1120,6 +1164,7 @@ function modNumeros(){
    <div class="menu-grid" style="padding-bottom:20px">
      <button class="btn-grande c-uva" onclick="modNumerosObjetos()"><span class="emo">🍎</span>Contar con<br>objetos</button>
      <button class="btn-grande c-coral" onclick="modManos()"><span class="emo">🖐️</span>Contar con<br>las manos</button>
+     <button class="btn-grande c-pasto" onclick="modRecta()"><span class="emo">🐸</span>Saltos en la<br>recta (sumar/restar)</button>
    </div>`;
 }
 function modNumerosObjetos(){ _numIdx=0; rondaNumero(); }
@@ -1275,6 +1320,111 @@ function rondaManos(){
       b.classList.add('incorrecto'); Estado.registrarFallo(esResta?'resta manos':'suma manos');
       Mascota.animar('Contá los deditos otra vez 👆'); Voz.hablar('Esa no. Contá de nuevo');
       setTimeout(()=>b.classList.remove('incorrecto'),700);
+    }
+  };
+}
+
+
+/* ===================== NÚMEROS · RECTA NUMÉRICA (SALTOS) =====================
+   Una rana salta sobre la recta del 0 al tope. Suma = salta hacia adelante,
+   resta = salta hacia atrás. El nene VE por qué da ese resultado.
+   Sigue la regla pedagógica: error inmediato, dice la respuesta, se queda
+   en la misma cuenta hasta acertar. */
+function modRecta(){ rondaRecta(); }
+function rondaRecta(){
+  const e=Nivel.escalon();
+  const tope=[5,10,10,15,20][e];           // largo de la recta según grado
+  const esResta=Math.random()<0.45;
+  let A,B,RES;
+  if(!esResta){
+    A=Math.floor(Math.random()*(tope-1));            // 0..tope-1
+    B=1+Math.floor(Math.random()*Math.min(5,tope-A)); // que no se pase del tope
+    RES=A+B;
+  }else{
+    A=2+Math.floor(Math.random()*(tope-2));          // 2..tope
+    B=1+Math.floor(Math.random()*Math.min(5,A));     // que no baje de 0
+    RES=A-B;
+  }
+  const signo=esResta?'−':'+';
+  const palabraOp=esResta?'menos':'más';
+  const clseOp=esResta?'op-resta':'op-suma';
+  const titulo=esResta? '🐸 La rana salta hacia atrás' : '🐸 La rana salta hacia adelante';
+
+  // opciones (3): el resultado + 2 vecinos
+  const set=new Set([RES]); let guard=0;
+  while(set.size<3 && guard++<40){ let d=RES+(Math.floor(Math.random()*5)-2); if(d>=0&&d<=tope&&d!==RES)set.add(d); }
+  while(set.size<3){ let d=RES+set.size; if(d<=tope)set.add(d); else set.add(Math.max(0,RES-set.size)); }
+  const ops=UI.mezclar([...set]);
+
+  // construir nodos de la recta
+  let nodos='';
+  for(let i=0;i<=tope;i++){
+    const cls = i===A?'punto ini' : (i===RES?'':'punto'); // el fin se revela al acertar
+    nodos+=`<div class="nodo"><div class="punto ${i===A?'ini':''}" data-i="${i}"></div><div class="etq">${i}</div></div>`;
+  }
+
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:8px">
+     <div class="tarjeta" style="gap:14px">
+       <div class="consigna">${titulo}</div>
+       <div class="cuenta-grande">
+         <span>${A}</span><span class="${clseOp}">${signo}</span><span>${B}</span>
+         <span style="color:var(--uva)">=</span><span style="color:var(--uva)">?</span>
+       </div>
+       <div class="recta-wrap">
+         <div class="recta ${esResta?'resta':'suma'}" id="recta">
+           <div class="linea"></div>
+           ${nodos}
+           <div class="rana" id="rana">🐸</div>
+           <div class="arco" id="arco"></div>
+         </div>
+       </div>
+       <button class="btn-sonido" id="btnSalto">▶️ Ver el salto</button>
+       <div class="consigna">¿En qué número cae la rana?</div>
+       <div class="num-opciones" id="opsRecta">
+         ${ops.map(o=>`<button class="num-op" data-ok="${o===RES}" data-n="${o}"><span class="num-op-cifra">${o}</span></button>`).join('')}
+       </div>
+     </div>
+   </div>`;
+
+  const recta=document.getElementById('recta');
+  const rana=document.getElementById('rana');
+  const arco=document.getElementById('arco');
+  const NODO=46; // ancho fijo de cada nodo (coincide con el CSS)
+  const xDe=i=> i*NODO + 23; // centro del punto i
+  // posición inicial de la rana sobre A
+  const colocar=i=>{ rana.style.left=xDe(i)+'px'; };
+  colocar(A);
+
+  function animarSalto(){
+    colocar(A);
+    // dibujar el arco entre A y RES
+    const izq=Math.min(A,RES), der=Math.max(A,RES);
+    arco.style.left=xDe(izq)+'px';
+    arco.style.width=(xDe(der)-xDe(izq))+'px';
+    arco.classList.add('ver');
+    Voz.hablar(`${A} ${palabraOp} ${B}`);
+    setTimeout(()=>{ colocar(RES); }, 350);
+  }
+  document.getElementById('btnSalto').onclick=animarSalto;
+  setTimeout(animarSalto,500);
+
+  document.getElementById('opsRecta').onclick=ev=>{
+    const b=ev.target.closest('.num-op'); if(!b||b.dataset.done)return;
+    if(b.dataset.ok==='true'){
+      b.dataset.done=1; b.classList.add('correcto');
+      // marcar el punto final en verde
+      const pf=recta.querySelector(`.punto[data-i="${RES}"]`); if(pf) pf.classList.add('fin');
+      colocar(RES);
+      Voz.hablar(`¡Muy bien! ${A} ${palabraOp} ${B} es igual a ${RES}`);
+      Estado.sumarEstrella(2); Mascota.festejar();
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(rondaRecta,2000);
+    }else{
+      b.classList.add('incorrecto'); Estado.registrarFallo(esResta?'resta recta':'suma recta');
+      Mascota.animar('Mirá el salto otra vez 🐸'); Voz.hablar(`Esa no. La respuesta es ${RES}. Probá de nuevo`);
+      setTimeout(()=>b.classList.remove('incorrecto'),700);
+      animarSalto();
     }
   };
 }
@@ -2085,10 +2235,15 @@ function pantallaTimer(){
 
 /* ===================== LOGROS ===================== */
 function pantallaLogros(){
+  const r = Estado.data.racha||0;
+  const txtRacha = r>0 ? `🔥 ${r} día${r===1?'':'s'} seguido${r===1?'':'s'}` : '¡Vení mañana para empezar tu racha!';
   P.innerHTML=`<h1 class="titulo">🏆 Mis Logros</h1>
    <div style="text-align:center;color:#fff;font-weight:800;font-size:1.3rem">Tenés ⭐ ${Estado.data.estrellas} estrellas</div>
+   <div style="text-align:center;color:#fff;font-weight:800;font-size:1.1rem;margin-top:4px">${txtRacha}</div>
    <div class="medallas">
    ${MEDALLAS.map(m=>{const g=Estado.data.estrellas>=m.meta?'':'gris';
+     return `<div class="medalla ${g}"><div class="ico">${m.ico}</div><small>${m.txt}</small></div>`;}).join('')}
+   ${MEDALLAS_RACHA.map(m=>{const g=(Estado.data.rachaMax||0)>=m.meta?'':'gris';
      return `<div class="medalla ${g}"><div class="ico">${m.ico}</div><small>${m.txt}</small></div>`;}).join('')}
    </div>
    <div class="form" style="text-align:center">
@@ -2806,7 +2961,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 16;
+const APP_VERSION = 18;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {
@@ -2850,6 +3005,7 @@ setTimeout(()=>AutoActualizar.revisar(), 3000);
 
 /* ===================== ARRANQUE ===================== */
 Estado.cargar();
+Estado.registrarVisita();
 Banco.cargar();
 Calma.cargar();
 // Fijar el alto real de la ventana (el WebView calcula mal vh/dvh tras document.write).

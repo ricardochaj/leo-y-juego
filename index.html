@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 20; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 21; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -1067,29 +1067,47 @@ const Nav={
    PANTALLAS
    =================================================================== */
 
-/* --- PERFIL inicial --- */
+/* --- PERFIL ---
+   Modo EDICIÓN (editar=true): solo lo abre el papá/mamá con el PIN. Campos editables.
+   Modo LECTURA (editar=false): lo que ve el nene. Muestra los datos pero NO se tocan;
+   para cambiar algo hay que poner la clave. Si todavía no hay perfil cargado
+   (primera vez), se abre en modo edición sin pedir clave. */
+let _perfilEditar=false;
 function pantallaPerfil(){
+  const editar=_perfilEditar; // solo true si entró con el PIN o es la primera vez
+  const dis = editar ? '' : 'disabled';
   P.innerHTML=`
-  <h1 class="titulo">¡Hola! 👋</h1>
+  <h1 class="titulo">${editar?'¡Hola! 👋':'👦 Mi Perfil'}</h1>
   <div class="form">
     <label>¿Cómo te llamás?</label>
-    <input id="inNombre" placeholder="Mateo" value="${Estado.data.nombre||''}">
+    <input id="inNombre" placeholder="Mateo" value="${Estado.data.nombre||''}" ${dis}>
     <label>¿Cuántos años tenés?</label>
-    <select id="inEdad">${[4,5,6,7,8,9,10,11,12,13].map(e=>`<option ${e==Estado.data.edad?'selected':''}>${e}</option>`).join('')}</select>
+    <select id="inEdad" ${dis}>${[4,5,6,7,8,9,10,11,12,13].map(e=>`<option ${e==Estado.data.edad?'selected':''}>${e}</option>`).join('')}</select>
     <label>¿Qué grado?</label>
     <div class="opciones-grado" id="grados">
-      ${['Jardín','1°','2°','3°','4°','5°','6°','7°'].map(g=>`<div class="chip ${g==Estado.data.grado?'sel':''}" data-g="${g}">${g}</div>`).join('')}
+      ${['Jardín','1°','2°','3°','4°','5°','6°','7°'].map(g=>`<div class="chip ${g==Estado.data.grado?'sel':''}" data-g="${g}" ${editar?'':'style="pointer-events:none;opacity:.85"'}>${g}</div>`).join('')}
     </div>
-    <button class="fab-leer" onclick="guardarPerfil()">¡Empezar! 🚀</button>
+    ${editar
+      ? `<button class="fab-leer" onclick="guardarPerfil()">¡Empezar! 🚀</button>`
+      : `<button class="fab-leer" style="background:var(--pizarron)" onclick="editarPerfilConClave()">🔒 Cambiar mis datos (clave)</button>`}
   </div>`;
-  document.getElementById('grados').onclick=e=>{ const c=e.target.closest('.chip'); if(!c)return;
-    document.querySelectorAll('#grados .chip').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); };
+  if(editar){
+    document.getElementById('grados').onclick=e=>{ const c=e.target.closest('.chip'); if(!c)return;
+      document.querySelectorAll('#grados .chip').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); };
+  }
+}
+/* El nene toca "Cambiar mis datos": le pedimos la clave de la Zona Padres.
+   Si acierta, reabrimos el perfil en modo edición. Misma clave que Zona Padres. */
+function editarPerfilConClave(){
+  if(!Estado.data.pinPadres){ _perfilEditar=true; Nav.ir(pantallaPerfil,false); return; }
+  Nav.ir(()=>pantallaPedirPin(()=>{ _perfilEditar=true; Nav.reset(pantallaMenu); Nav.ir(pantallaPerfil); }), false);
 }
 function guardarPerfil(){
   Estado.data.nombre=document.getElementById('inNombre').value.trim()||'Amiguito';
   Estado.data.edad=+document.getElementById('inEdad').value;
   Estado.data.grado=document.querySelector('#grados .chip.sel').dataset.g;
   Estado.guardar();
+  _perfilEditar=false;
   Nav.reset(pantallaMenu);
   setTimeout(()=>Mascota.animar('¡Hola '+Estado.data.nombre+'!'),300);
 }
@@ -1112,7 +1130,7 @@ function pantallaMenu(){
     <button class="btn-grande c-sol"     onclick="Nav.ir(pantallaRutina)"><span class="emo">📋</span>Mi Rutina</button>
     <button class="btn-grande c-cielo"   onclick="Nav.ir(pantallaProgreso)"><span class="emo">🗺️</span>Mis Mundos</button>
     <button class="btn-grande c-pizarron" onclick="entrarPadres()"><span class="emo">👨‍👩‍👧</span>Zona Padres</button>
-    <button class="btn-grande c-coral"   onclick="Nav.ir(pantallaPerfil)"><span class="emo">👦</span>Mi Perfil</button>
+    <button class="btn-grande c-coral"   onclick="_perfilEditar=false;Nav.ir(pantallaPerfil)"><span class="emo">👦</span>Mi Perfil</button>
   </div>`;
 }
 
@@ -2616,9 +2634,10 @@ function confirmarPin(primero){
     }
   });
 }
-function pantallaPedirPin(){
+function pantallaPedirPin(alAcertar){
   _pinTemp='';
-  P.innerHTML=`<h1 class="titulo">🔒 Zona Padres</h1>
+  const titulo = alAcertar ? '🔒 Clave' : '🔒 Zona Padres';
+  P.innerHTML=`<h1 class="titulo">${titulo}</h1>
    <div class="escena">
      <div class="tarjeta">
        <div class="consigna">Escribí la clave de 4 números</div>
@@ -2632,7 +2651,8 @@ function pantallaPedirPin(){
     _pinTemp+=digito; pintarPuntos(_pinTemp.length);
     if(_pinTemp.length===4){
       if(_pinTemp===Estado.data.pinPadres){
-        Nav.pila=[pantallaMenu]; Nav.ir(pantallaPadres);
+        if(typeof alAcertar==='function'){ alAcertar(); }
+        else { Nav.pila=[pantallaMenu]; Nav.ir(pantallaPadres); }
       }else{
         const p=document.getElementById('pinPuntos'); if(p){ p.classList.add('pin-error'); setTimeout(()=>p.classList.remove('pin-error'),500); }
         _pinTemp=''; setTimeout(()=>pintarPuntos(0),500);
@@ -3251,7 +3271,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {
@@ -3337,7 +3357,7 @@ try{
   obs.observe(document.getElementById('pantalla'),{childList:true});
 }catch(e){}
 if(Estado.data.nombre){ Nav.reset(pantallaMenu); }
-else { Nav.reset(pantallaPerfil); }
+else { _perfilEditar=true; Nav.reset(pantallaPerfil); }
 
 // Avisar (una vez) si el dispositivo no tiene voz en español
 setTimeout(()=>{

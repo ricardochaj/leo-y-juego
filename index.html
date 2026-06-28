@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 21; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 22; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -377,7 +377,19 @@ const DEF = {
     {t:'AUTO',img:'🚗'},{t:'AVION',img:'✈️'},{t:'BARCO',img:'⛵'},{t:'TREN',img:'🚆'},
     {t:'MATE',img:'🧉'},{t:'ESCUELA',img:'🏫'},{t:'PLAZA',img:'🛝'},{t:'BANDERA',img:'🇦🇷'},
     {t:'RIO',img:'🏞️'},{t:'CABALLO',img:'🐎'},{t:'COLECTIVO',img:'🚌'},{t:'GUITARRA',img:'🎸'},
-    {t:'ZAPATO',img:'👟'},{t:'GORRO',img:'🧢'},{t:'GLOBO',img:'🎈'},{t:'REGALO',img:'🎁'}
+    {t:'ZAPATO',img:'👟'},{t:'GORRO',img:'🧢'},{t:'GLOBO',img:'🎈'},{t:'REGALO',img:'🎁'},
+    // — cortas (jardín/1°) —
+    {t:'PIE',img:'🦶'},{t:'OJO',img:'👁️'},{t:'RED',img:'🥅'},{t:'SAL',img:'🧂'},
+    {t:'TAZA',img:'☕'},{t:'SAPO',img:'🐸'},{t:'LORO',img:'🦜'},{t:'SOPA',img:'🍲'},
+    {t:'BOTE',img:'🛶'},{t:'DADO',img:'🎲'},{t:'PALA',img:'🥄'},{t:'RANA',img:'🐸'},
+    // — medias (2°/3°) —
+    {t:'CONEJO',img:'🐰'},{t:'TORTUGA',img:'🐢'},{t:'JIRAFA',img:'🦒'},{t:'CAMISA',img:'👕'},
+    {t:'VENTANA',img:'🪟'},{t:'GALLETA',img:'🍪'},{t:'PALOMA',img:'🕊️'},{t:'MALETA',img:'🧳'},
+    {t:'TOMATE',img:'🍅'},{t:'ZANAHORIA',img:'🥕'},{t:'CASTILLO',img:'🏰'},{t:'MARTILLO',img:'🔨'},
+    // — largas (4° a 7°) —
+    {t:'MARIPOSA',img:'🦋'},{t:'ELEFANTE',img:'🐘'},{t:'CHOCOLATE',img:'🍫'},{t:'DINOSAURIO',img:'🦕'},
+    {t:'BICICLETA',img:'🚲'},{t:'HELICOPTERO',img:'🚁'},{t:'COMPUTADORA',img:'💻'},{t:'TELESCOPIO',img:'🔭'},
+    {t:'COCODRILO',img:'🐊'},{t:'PINGUINO',img:'🐧'},{t:'ASTRONAUTA',img:'👨‍🚀'},{t:'BIBLIOTECA',img:'📚'}
   ],
   // frases con pregunta y opciones [imagen, esCorrecta]
   frases: [
@@ -390,7 +402,27 @@ const DEF = {
     {t:'EL SOL ES AMARILLO.', preg:'¿De qué color es el sol?', ops:[['💛',true],['💙',false],['❤️',false]]},
     {t:'LA LUNA SALE DE NOCHE.', preg:'¿Cuándo sale la luna?', ops:[['🌙',true],['☀️',false],['🌈',false]]},
     {t:'EL NENE COME UNA MANZANA.', preg:'¿Qué come el nene?', ops:[['🍎',true],['🍌',false],['🍇',false]]},
-    {t:'EL PEZ VIVE EN EL AGUA.', preg:'¿Dónde vive el pez?', ops:[['🌊',true],['🌳',false],['🏠',false]]}
+    {t:'EL PEZ VIVE EN EL AGUA.', preg:'¿Dónde vive el pez?', ops:[['🌊',true],['🌳',false],['🏠',false]]},
+    // — frases nuevas (cortas/medias) —
+    {t:'EL OSO COME MIEL.', preg:'¿Qué come el oso?', ops:[['🍯',true],['🥩',false],['🍫',false]]},
+    {t:'LA ABEJA VUELA EN LA FLOR.', preg:'¿Dónde vuela la abeja?', ops:[['🌸',true],['🌊',false],['🏠',false]]},
+    {t:'EL NENE JUEGA CON LA PELOTA.', preg:'¿Con qué juega el nene?', ops:[['⚽',true],['📖',false],['🚗',false]]},
+    {t:'MAMÁ MANEJA EL AUTO.', preg:'¿Qué maneja mamá?', ops:[['🚗',true],['✈️',false],['🚲',false]]},
+    {t:'EL PÁJARO CANTA EN EL ÁRBOL.', preg:'¿Dónde canta el pájaro?', ops:[['🌳',true],['🌊',false],['🏠',false]]},
+    {t:'LA TORTUGA CAMINA DESPACIO.', preg:'¿Cómo camina la tortuga?', ops:[['🐢',true],['🐆',false],['🐇',false]]},
+    {t:'EL BEBÉ TOMA LECHE.', preg:'¿Qué toma el bebé?', ops:[['🥛',true],['☕',false],['🧉',false]]},
+    {t:'EL PAYASO NOS HACE REÍR.', preg:'¿Qué hace el payaso?', ops:[['😀',true],['😢',false],['😴',false]]},
+    {t:'LLUEVE Y SALE EL ARCOÍRIS.', preg:'¿Qué sale después de la lluvia?', ops:[['🌈',true],['❄️',false],['🌵',false]]},
+    {t:'LA ARAÑA TEJE SU TELA.', preg:'¿Qué teje la araña?', ops:[['🕸️',true],['🧶',false],['🍝',false]]},
+    // — frases largas (grados altos) —
+    {t:'EL BOMBERO APAGA EL FUEGO CON AGUA.', preg:'¿Con qué apaga el fuego?', ops:[['💧',true],['🔥',false],['🌬️',false]]},
+    {t:'EN INVIERNO HACE FRÍO Y CAE NIEVE.', preg:'¿Qué cae en invierno?', ops:[['❄️',false],['🌨️',true],['🌻',false]]},
+    {t:'EL MÉDICO CUIDA A LAS PERSONAS ENFERMAS.', preg:'¿A quién cuida el médico?', ops:[['🤒',true],['🏃',false],['😴',false]]},
+    {t:'LAS PLANTAS NECESITAN SOL Y AGUA PARA CRECER.', preg:'¿Qué necesitan las plantas?', ops:[['☀️',true],['🌙',false],['⭐',false]]},
+    {t:'EL ASTRONAUTA VIAJA EN UN COHETE AL ESPACIO.', preg:'¿En qué viaja el astronauta?', ops:[['🚀',true],['🚗',false],['⛵',false]]},
+    {t:'LA MAESTRA ENSEÑA A LEER EN LA ESCUELA.', preg:'¿Qué enseña la maestra?', ops:[['📖',true],['🍳',false],['⚽',false]]},
+    {t:'EL AGRICULTOR SIEMBRA SEMILLAS EN LA TIERRA.', preg:'¿Qué siembra el agricultor?', ops:[['🌱',true],['🐟',false],['🔧',false]]},
+    {t:'DESPUÉS DE LA TORMENTA VOLVIÓ A SALIR EL SOL.', preg:'¿Qué salió después de la tormenta?', ops:[['☀️',true],['🌧️',false],['🌙',false]]}
   ],
   // letras para el módulo fónico: cuáles están activas + imagen-clave + ejemplo
   fonico: [
@@ -474,7 +506,7 @@ const DEF = {
     G:[['🐱','Gato'],['🎸','Guitarra'],['🧤','Guante'],['🌻','Girasol']]
   },
   // objetos para contar en el módulo de números (sumas y restas)
-  contables: ['🍎','🍌','⭐','🐱','🐶','⚽','🌸','🚗','🎈','🍓','🐟','🦋'],
+  contables: ['🍎','🍌','⭐','🐱','🐶','⚽','🌸','🚗','🎈','🍓','🐟','🦋','🍊','🐝','🌻','🚀','🍪','🐠','🎁','🦆'],
   // emociones para el módulo de reconocimiento emocional (útil en TEA)
   emociones: [
     {cara:'😀', nombre:'CONTENTO'},
@@ -484,7 +516,11 @@ const DEF = {
     {cara:'😴', nombre:'CANSADO'},
     {cara:'😮', nombre:'SORPRENDIDO'},
     {cara:'🥰', nombre:'QUERIDO'},
-    {cara:'😋', nombre:'RICO'}
+    {cara:'😋', nombre:'RICO'},
+    {cara:'😎', nombre:'ORGULLOSO'},
+    {cara:'😳', nombre:'AVERGONZADO'},
+    {cara:'🤔', nombre:'PENSATIVO'},
+    {cara:'😝', nombre:'DIVERTIDO'}
   ],
   // rutina visual con pictogramas (para anticipación, muy útil en TEA)
   rutina: [
@@ -510,7 +546,9 @@ const DEF = {
     {n:'MARRÓN', c:'#8b5a2b', emoji:'🟫'},
     {n:'NEGRO', c:'#222222', emoji:'⬛'},
     {n:'BLANCO', c:'#f4f4f4', emoji:'⬜'},
-    {n:'ROSA', c:'#ff8fc8', emoji:'🌸'}
+    {n:'ROSA', c:'#ff8fc8', emoji:'🌸'},
+    {n:'CELESTE', c:'#5ec8e8', emoji:'🔵'},
+    {n:'GRIS', c:'#9aa0a6', emoji:'⚫'}
   ],
   // FORMAS: nombre + emoji
   formas: [
@@ -521,25 +559,35 @@ const DEF = {
     {n:'CORAZÓN', emoji:'❤️'},
     {n:'ROMBO', emoji:'🔷'},
     {n:'ÓVALO', emoji:'🥚'},
-    {n:'LUNA', emoji:'🌙'}
+    {n:'LUNA', emoji:'🌙'},
+    {n:'RECTÁNGULO', emoji:'🟫'},
+    {n:'DIAMANTE', emoji:'🔶'},
+    {n:'CRUZ', emoji:'➕'}
   ],
   // CATEGORÍAS: cada grupo con su nombre, ícono y elementos
   categorias: [
-    {n:'ANIMALES', ico:'🐶', items:['🐱','🐶','🐮','🐴','🐷','🐰','🦁','🐯','🐻','🐵','🐔','🐸']},
-    {n:'COMIDAS', ico:'🍎', items:['🍎','🍌','🍇','🍉','🍞','🧀','🥚','🍓','🥕','🍔','🍕','🥦']},
-    {n:'TRANSPORTES', ico:'🚗', items:['🚗','🚌','✈️','⛵','🚆','🚲','🏍️','🚜','🚑','🚓','🚀','🛵']},
-    {n:'ROPA', ico:'👕', items:['👕','👖','👟','🧢','🧥','🧦','👗','🩳','👞','🧤','🥼','👚']}
+    {n:'ANIMALES', ico:'🐶', items:['🐱','🐶','🐮','🐴','🐷','🐰','🦁','🐯','🐻','🐵','🐔','🐸','🐘','🦒','🐧','🦊']},
+    {n:'COMIDAS', ico:'🍎', items:['🍎','🍌','🍇','🍉','🍞','🧀','🥚','🍓','🥕','🍔','🍕','🥦','🍊','🍫','🍪','🥑']},
+    {n:'TRANSPORTES', ico:'🚗', items:['🚗','🚌','✈️','⛵','🚆','🚲','🏍️','🚜','🚑','🚓','🚀','🛵','🚁','🛶','🚂','🛴']},
+    {n:'ROPA', ico:'👕', items:['👕','👖','👟','🧢','🧥','🧦','👗','👞','🧤','🥼','👚','🧣','👒','👔','👠','🥾']},
+    {n:'JUGUETES', ico:'🧸', items:['🧸','🎲','🎈','🧩','⚽','🎯','🚂','🪀','🎀','🎮','🏀','🎨']},
+    {n:'NATURALEZA', ico:'🌳', items:['🌳','🌸','🌻','🍃','🌵','🌲','🍂','🌷','🪨','🐚','🍄','⭐']}
   ],
   // QUÉ FALTA: objeto completo y descripción de la pieza que falta (con distractores)
   queFalta: [
     {obj:'🚲', nom:'bicicleta', falta:'una rueda', ok:'⚙️', distract:['🪶','🔑']},
-    {obj:'🚗', nom:'auto', falta:'una rueda', ok:'🛞', distract:['🌂','🎈']},
+    {obj:'🚗', nom:'auto', falta:'una rueda', ok:'⚙️', distract:['🌂','🎈']},
     {obj:'🏠', nom:'casa', falta:'la puerta', ok:'🚪', distract:['🍕','🐟']},
     {obj:'😊', nom:'cara', falta:'la nariz', ok:'👃', distract:['🍎','⚽']},
     {obj:'🌳', nom:'árbol', falta:'una hoja', ok:'🍃', distract:['🔧','📱']},
     {obj:'🐶', nom:'perro', falta:'la cola', ok:'〰️', distract:['🍌','🚗']},
     {obj:'⛵', nom:'barco', falta:'la vela', ok:'⛵', distract:['🌵','🍩']},
-    {obj:'🎂', nom:'torta', falta:'las velas', ok:'🕯️', distract:['🔌','🧦']}
+    {obj:'🎂', nom:'torta', falta:'las velas', ok:'🕯️', distract:['🔌','🧦']},
+    {obj:'✈️', nom:'avión', falta:'las alas', ok:'🛩️', distract:['🍩','🪨']},
+    {obj:'🦋', nom:'mariposa', falta:'una ala', ok:'🦋', distract:['🔩','🍪']},
+    {obj:'🌸', nom:'flor', falta:'el tallo', ok:'🌿', distract:['🔦','🧦']},
+    {obj:'🎸', nom:'guitarra', falta:'las cuerdas', ok:'🎵', distract:['🍕','🐠']},
+    {obj:'⏰', nom:'reloj', falta:'las agujas', ok:'🕐', distract:['🍌','🚙']}
   ],
   // HISTORIAS SOCIALES: situación + pregunta + opciones de emoción [emoji, esCorrecta]
   historias: [
@@ -550,7 +598,13 @@ const DEF = {
     {sit:'Mateo escuchó un ruido fuerte y oscuro de noche.', preg:'¿Cómo se siente Mateo?', ops:[['😨',true],['😀',false],['😋',false]]},
     {sit:'A Lucía le regalaron el perrito que quería.', preg:'¿Cómo se siente Lucía?', ops:[['🥰',true],['😠',false],['😢',false]]},
     {sit:'Tomás jugó toda la tarde y ahora tiene mucho sueño.', preg:'¿Cómo se siente Tomás?', ops:[['😴',true],['😀',false],['😠',false]]},
-    {sit:'A Caro le dieron una sorpresa que no esperaba.', preg:'¿Cómo se siente Caro?', ops:[['😮',true],['😢',false],['😴',false]]}
+    {sit:'A Caro le dieron una sorpresa que no esperaba.', preg:'¿Cómo se siente Caro?', ops:[['😮',true],['😢',false],['😴',false]]},
+    {sit:'Nico ganó la carrera en la clase de gimnasia.', preg:'¿Cómo se siente Nico?', ops:[['😎',true],['😢',false],['😨',false]]},
+    {sit:'A Vale se le cayó el helado al suelo.', preg:'¿Cómo se siente Vale?', ops:[['😢',true],['😀',false],['😎',false]]},
+    {sit:'Benja compartió sus galletas con un amigo nuevo.', preg:'¿Cómo se siente el amigo de Benja?', ops:[['😀',true],['😠',false],['😴',false]]},
+    {sit:'Emma se equivocó al hablar delante de todos.', preg:'¿Cómo se siente Emma?', ops:[['😳',true],['😀',false],['😴',false]]},
+    {sit:'A Joaquín lo invitaron a un cumpleaños el sábado.', preg:'¿Cómo se siente Joaquín?', ops:[['😀',true],['😢',false],['😠',false]]},
+    {sit:'Mía no entiende un juego nuevo y se queda pensando.', preg:'¿Cómo se siente Mía?', ops:[['🤔',true],['😠',false],['😴',false]]}
   ],
   // DIBUJOS para pintar con el dedo (motricidad fina). Cada uno es un path SVG
   // simple; el nene pinta DENTRO del contorno (la pintura no se sale).
@@ -615,7 +669,7 @@ function formaSilaba(cons, voc, tam=64){
 /* ---------- BANCO: contenido editable (default + lo guardado) ---------- */
 const Banco = {
   data:null,
-  VERSION:6, // subir este número cuando se cambie el contenido por defecto
+  VERSION:7, // subir este número cuando se cambie el contenido por defecto
   cargar(){
     try{ const s=localStorage.getItem('leoyjuego-banco'); this.data = s?JSON.parse(s):this.clonarDefault(); }
     catch(e){ this.data=this.clonarDefault(); }
@@ -1250,11 +1304,13 @@ function modNumerosObjetos(){ _numIdx=0; rondaNumero(); }
 function rondaNumero(){
   const e=Nivel.escalon();
   const obj=UI.azar(Banco.data.contables);
-  // Tipos de cuenta disponibles según el grado
+  // Tipos de cuenta disponibles según el grado (más variedad = no se memoriza)
   let tipos=['suma','resta'];
-  if(e>=2) tipos.push('suma','resta');          // más variedad
+  if(e>=1) tipos.push('suma','resta','doble');   // 1°-2°: dobles
+  if(e>=2) tipos.push('suma','resta');           // 3°-4°: más mezcla
   if(e>=2) tipos.push('multi');                  // multiplicación desde 3°
-  if(e>=3) tipos.push('multi');
+  if(e>=3) tipos.push('multi','divi');           // división desde 5°
+  if(e>=4) tipos.push('multi','divi');           // 7°: más nivel
   const tipo=UI.azar(tipos);
 
   // Topes de números por escalón (jardín..7°)
@@ -1269,6 +1325,16 @@ function rondaNumero(){
     a=2+Math.floor(Math.random()*(tope-2>0?tope-2:1));
     b=1+Math.floor(Math.random()*(a-1));
     resultado=a-b; signo='−'; palabraOp='menos';
+  }else if(tipo==='doble'){ // el doble de un número (a + a)
+    const topD=[3,5,8,12,15][e]||5;
+    a=1+Math.floor(Math.random()*topD); b=a;
+    resultado=a+b; signo='+'; palabraOp='más';
+  }else if(tipo==='divi'){ // división exacta (sin resto)
+    const maxF=[0,0,0,9,12][e]||9;
+    b=2+Math.floor(Math.random()*(maxF-1));        // divisor
+    const coc=2+Math.floor(Math.random()*(maxF-1)); // cociente
+    a=b*coc;                                        // dividendo
+    resultado=coc; signo='÷'; palabraOp='dividido';
   }else{ // multiplicación
     const maxFactor=[0,0,5,9,12][e]||5;
     a=2+Math.floor(Math.random()*(maxFactor-1));
@@ -1276,7 +1342,7 @@ function rondaNumero(){
     resultado=a*b; signo='×'; palabraOp='por';
   }
   // Mostrar objetos para contar solo en jardín/1°/2° y si los números son chicos
-  mostrarObjetos = e<=2 && resultado<=12 && a<=9 && b<=9 && tipo!=='multi';
+  mostrarObjetos = e<=2 && resultado<=12 && a<=9 && b<=9 && (tipo==='suma'||tipo==='resta'||tipo==='doble');
   const dispersion = e<=1?2:(e===2?4:Math.max(5,Math.round(resultado*0.3)));
 
   const opcionesSet=new Set([resultado]);
@@ -1288,7 +1354,7 @@ function rondaNumero(){
   while(opcionesSet.size<3){ opcionesSet.add(resultado+opcionesSet.size); }
   const opciones=UI.mezclar([...opcionesSet]);
   const fila=n=>Array(n).fill(obj).join('');
-  const tit = tipo==='suma'?'Sumá 🧮':tipo==='resta'?'Restá ✂️':'Multiplicá ✖️';
+  const tit = tipo==='suma'?'Sumá 🧮':tipo==='resta'?'Restá ✂️':tipo==='doble'?'El doble 🧮':tipo==='divi'?'Dividí ➗':'Multiplicá ✖️';
 
   P.innerHTML=`
    <div class="escena">
@@ -1875,10 +1941,25 @@ function ordenarLetras(aciertos){
 }
 
 /* ===================== MÓDULO 4 · FRASES ===================== */
-function modFrases(){ rondaFrase(0); }
+let _frasesRonda=[];
+function modFrases(){
+  // Elegimos frases acordes al nivel y las barajamos para que NO salgan siempre
+  // las mismas ni en el mismo orden (evita que el niño las memorice).
+  const e=Nivel.escalon();
+  let pool=Banco.frases.slice();
+  if(e<=0){ // jardín: frases más cortas
+    const cortas=pool.filter(f=>f.t.length<=22); if(cortas.length>=5) pool=cortas;
+  }else if(e===1){ // 1°-2°: cortas y medias
+    const medias=pool.filter(f=>f.t.length<=34); if(medias.length>=5) pool=medias;
+  }else if(e>=3){ // 5° en adelante: priorizar las largas
+    const largas=pool.filter(f=>f.t.length>=30); if(largas.length>=4) pool=largas;
+  }
+  _frasesRonda=UI.mezclar(pool);
+  rondaFrase(0);
+}
 function rondaFrase(i){
-  if(i>=Banco.frases.length){ return finRonda('fra', modFrases); }
-  const f=Banco.frases[i];
+  if(i>=_frasesRonda.length){ return finRonda('fra', modFrases); }
+  const f=_frasesRonda[i];
   const fraseEsc=f.t.replace(/'/g,"\\'");
   const pregEsc=f.preg.replace(/'/g,"\\'");
   P.innerHTML=`
@@ -3271,7 +3352,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

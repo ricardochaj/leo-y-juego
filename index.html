@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 22; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 23; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -550,19 +550,19 @@ const DEF = {
     {n:'CELESTE', c:'#5ec8e8', emoji:'🔵'},
     {n:'GRIS', c:'#9aa0a6', emoji:'⚫'}
   ],
-  // FORMAS: nombre + emoji
+  // FORMAS: nombre + emoji + artículo (el/la)
   formas: [
-    {n:'CÍRCULO', emoji:'⭕'},
-    {n:'CUADRADO', emoji:'🟦'},
-    {n:'TRIÁNGULO', emoji:'🔺'},
-    {n:'ESTRELLA', emoji:'⭐'},
-    {n:'CORAZÓN', emoji:'❤️'},
-    {n:'ROMBO', emoji:'🔷'},
-    {n:'ÓVALO', emoji:'🥚'},
-    {n:'LUNA', emoji:'🌙'},
-    {n:'RECTÁNGULO', emoji:'🟫'},
-    {n:'DIAMANTE', emoji:'🔶'},
-    {n:'CRUZ', emoji:'➕'}
+    {n:'CÍRCULO', art:'el', emoji:'⭕'},
+    {n:'CUADRADO', art:'el', emoji:'🟦'},
+    {n:'TRIÁNGULO', art:'el', emoji:'🔺'},
+    {n:'ESTRELLA', art:'la', emoji:'⭐'},
+    {n:'CORAZÓN', art:'el', emoji:'❤️'},
+    {n:'ROMBO', art:'el', emoji:'🔷'},
+    {n:'ÓVALO', art:'el', emoji:'🥚'},
+    {n:'LUNA', art:'la', emoji:'🌙'},
+    {n:'RECTÁNGULO', art:'el', emoji:'🟫'},
+    {n:'DIAMANTE', art:'el', emoji:'🔶'},
+    {n:'CRUZ', art:'la', emoji:'➕'}
   ],
   // CATEGORÍAS: cada grupo con su nombre, ícono y elementos
   categorias: [
@@ -574,20 +574,21 @@ const DEF = {
     {n:'NATURALEZA', ico:'🌳', items:['🌳','🌸','🌻','🍃','🌵','🌲','🍂','🌷','🪨','🐚','🍄','⭐']}
   ],
   // QUÉ FALTA: objeto completo y descripción de la pieza que falta (con distractores)
+  // art = artículo (el/la) para que la voz y el texto concuerden en género
   queFalta: [
-    {obj:'🚲', nom:'bicicleta', falta:'una rueda', ok:'⚙️', distract:['🪶','🔑']},
-    {obj:'🚗', nom:'auto', falta:'una rueda', ok:'⚙️', distract:['🌂','🎈']},
-    {obj:'🏠', nom:'casa', falta:'la puerta', ok:'🚪', distract:['🍕','🐟']},
-    {obj:'😊', nom:'cara', falta:'la nariz', ok:'👃', distract:['🍎','⚽']},
-    {obj:'🌳', nom:'árbol', falta:'una hoja', ok:'🍃', distract:['🔧','📱']},
-    {obj:'🐶', nom:'perro', falta:'la cola', ok:'〰️', distract:['🍌','🚗']},
-    {obj:'⛵', nom:'barco', falta:'la vela', ok:'⛵', distract:['🌵','🍩']},
-    {obj:'🎂', nom:'torta', falta:'las velas', ok:'🕯️', distract:['🔌','🧦']},
-    {obj:'✈️', nom:'avión', falta:'las alas', ok:'🛩️', distract:['🍩','🪨']},
-    {obj:'🦋', nom:'mariposa', falta:'una ala', ok:'🦋', distract:['🔩','🍪']},
-    {obj:'🌸', nom:'flor', falta:'el tallo', ok:'🌿', distract:['🔦','🧦']},
-    {obj:'🎸', nom:'guitarra', falta:'las cuerdas', ok:'🎵', distract:['🍕','🐠']},
-    {obj:'⏰', nom:'reloj', falta:'las agujas', ok:'🕐', distract:['🍌','🚙']}
+    {obj:'🚲', nom:'bicicleta', art:'la', falta:'una rueda', ok:'⚙️', distract:['🪶','🔑']},
+    {obj:'🚗', nom:'auto', art:'el', falta:'una rueda', ok:'⚙️', distract:['🌂','🎈']},
+    {obj:'🏠', nom:'casa', art:'la', falta:'la puerta', ok:'🚪', distract:['🍕','🐟']},
+    {obj:'😊', nom:'cara', art:'la', falta:'la nariz', ok:'👃', distract:['🍎','⚽']},
+    {obj:'🌳', nom:'árbol', art:'el', falta:'una hoja', ok:'🍃', distract:['🔧','📱']},
+    {obj:'🐶', nom:'perro', art:'el', falta:'la cola', ok:'〰️', distract:['🍌','🚗']},
+    {obj:'⛵', nom:'barco', art:'el', falta:'la vela', ok:'⛵', distract:['🌵','🍩']},
+    {obj:'🎂', nom:'torta', art:'la', falta:'las velas', ok:'🕯️', distract:['🔌','🧦']},
+    {obj:'✈️', nom:'avión', art:'el', falta:'las alas', ok:'🛩️', distract:['🍩','🪨']},
+    {obj:'🦋', nom:'mariposa', art:'la', falta:'una ala', ok:'🦋', distract:['🔩','🍪']},
+    {obj:'🌸', nom:'flor', art:'la', falta:'el tallo', ok:'🌿', distract:['🔦','🧦']},
+    {obj:'🎸', nom:'guitarra', art:'la', falta:'las cuerdas', ok:'🎵', distract:['🍕','🐠']},
+    {obj:'⏰', nom:'reloj', art:'el', falta:'las agujas', ok:'🕐', distract:['🍌','🚙']}
   ],
   // HISTORIAS SOCIALES: situación + pregunta + opciones de emoción [emoji, esCorrecta]
   historias: [
@@ -609,14 +610,14 @@ const DEF = {
   // DIBUJOS para pintar con el dedo (motricidad fina). Cada uno es un path SVG
   // simple; el nene pinta DENTRO del contorno (la pintura no se sale).
   dibujos: [
-    {nom:'CORAZÓN', emoji:'❤️', path:'M50,88 C20,62 8,42 8,28 C8,14 20,8 30,8 C40,8 48,16 50,24 C52,16 60,8 70,8 C80,8 92,14 92,28 C92,42 80,62 50,88 Z'},
-    {nom:'ESTRELLA', emoji:'⭐', path:'M50,6 L61,38 L95,38 L67,58 L78,90 L50,70 L22,90 L33,58 L5,38 L39,38 Z'},
-    {nom:'CASA', emoji:'🏠', path:'M50,8 L92,42 L80,42 L80,92 L20,92 L20,42 L8,42 Z'},
-    {nom:'PEZ', emoji:'🐟', path:'M15,50 C25,30 55,30 70,50 C55,70 25,70 15,50 Z M70,50 L92,35 L92,65 Z'},
-    {nom:'FLOR', emoji:'🌸', path:'M50,50 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M50,20 a12,12 0 1,1 0,1 M50,80 a12,12 0 1,1 0,-1 M20,50 a12,12 0 1,1 1,0 M80,50 a12,12 0 1,1 -1,0'},
-    {nom:'LUNA', emoji:'🌙', path:'M60,8 A42,42 0 1,0 60,92 A32,32 0 1,1 60,8 Z'},
-    {nom:'GLOBO', emoji:'🎈', path:'M50,8 C70,8 78,26 78,42 C78,62 60,72 50,72 C40,72 22,62 22,42 C22,26 30,8 50,8 Z M50,72 L50,92'},
-    {nom:'SOL', emoji:'☀️', path:'M50,50 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 M50,8 L50,20 M50,80 L50,92 M8,50 L20,50 M80,50 L92,50 M20,20 L28,28 M72,72 L80,80 M80,20 L72,28 M28,72 L20,80'}
+    {nom:'CORAZÓN', art:'el', emoji:'❤️', path:'M50,88 C20,62 8,42 8,28 C8,14 20,8 30,8 C40,8 48,16 50,24 C52,16 60,8 70,8 C80,8 92,14 92,28 C92,42 80,62 50,88 Z'},
+    {nom:'ESTRELLA', art:'la', emoji:'⭐', path:'M50,6 L61,38 L95,38 L67,58 L78,90 L50,70 L22,90 L33,58 L5,38 L39,38 Z'},
+    {nom:'CASA', art:'la', emoji:'🏠', path:'M50,8 L92,42 L80,42 L80,92 L20,92 L20,42 L8,42 Z'},
+    {nom:'PEZ', art:'el', emoji:'🐟', path:'M15,50 C25,30 55,30 70,50 C55,70 25,70 15,50 Z M70,50 L92,35 L92,65 Z'},
+    {nom:'FLOR', art:'la', emoji:'🌸', path:'M50,50 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M50,20 a12,12 0 1,1 0,1 M50,80 a12,12 0 1,1 0,-1 M20,50 a12,12 0 1,1 1,0 M80,50 a12,12 0 1,1 -1,0'},
+    {nom:'LUNA', art:'la', emoji:'🌙', path:'M60,8 A42,42 0 1,0 60,92 A32,32 0 1,1 60,8 Z'},
+    {nom:'GLOBO', art:'el', emoji:'🎈', path:'M50,8 C70,8 78,26 78,42 C78,62 60,72 50,72 C40,72 22,62 22,42 C22,26 30,8 50,8 Z M50,72 L50,92'},
+    {nom:'SOL', art:'el', emoji:'☀️', path:'M50,50 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 M50,8 L50,20 M50,80 L50,92 M8,50 L20,50 M80,50 L92,50 M20,20 L28,28 M72,72 L80,80 M80,20 L72,28 M28,72 L20,80'}
   ]
 };
 
@@ -669,7 +670,7 @@ function formaSilaba(cons, voc, tam=64){
 /* ---------- BANCO: contenido editable (default + lo guardado) ---------- */
 const Banco = {
   data:null,
-  VERSION:7, // subir este número cuando se cambie el contenido por defecto
+  VERSION:8, // subir este número cuando se cambie el contenido por defecto
   cargar(){
     try{ const s=localStorage.getItem('leoyjuego-banco'); this.data = s?JSON.parse(s):this.clonarDefault(); }
     catch(e){ this.data=this.clonarDefault(); }
@@ -2284,14 +2285,14 @@ function rondaForma(aciertos){
   P.innerHTML=`
    <div class="escena">
      <div class="tarjeta">
-       <div class="consigna">¿Cuál es el <b>${correcta.n.toLowerCase()}</b>?</div>
-       <button class="btn-sonido" onclick="Voz.hablar('¿Cuál es el ${correcta.n.toLowerCase()}?')">🔊 Escuchar</button>
+       <div class="consigna">¿Cuál es ${correcta.art||'el'} <b>${correcta.n.toLowerCase()}</b>?</div>
+       <button class="btn-sonido" onclick="Voz.hablar('¿Cuál es ${correcta.art||'el'} ${correcta.n.toLowerCase()}?')">🔊 Escuchar</button>
        <div class="fila-emoji" id="ops" style="margin-top:8px">
          ${ops.map(o=>`<div class="opcion-img" data-ok="${o[1]}" data-n="${o[0].n}">${o[0].emoji}</div>`).join('')}
        </div>
      </div>
    </div>`;
-  Voz.hablar('¿Cuál es el '+correcta.n.toLowerCase()+'?');
+  Voz.hablar('¿Cuál es '+(correcta.art||'el')+' '+correcta.n.toLowerCase()+'?');
   document.getElementById('ops').onclick=e=>{
     const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
     el.dataset.done=1; Voz.hablar(el.dataset.n);
@@ -2299,7 +2300,7 @@ function rondaForma(aciertos){
       setTimeout(()=>rondaForma(aciertos+1),1000);
     }else{ el.classList.add('incorrecto'); Estado.registrarFallo('forma '+correcta.n);
       const buena=document.querySelector('#ops .opcion-img[data-ok="true"]'); if(buena) buena.classList.add('correcto');
-      Mascota.animar('Ese es '+el.dataset.n.toLowerCase()+'. Buscá el '+correcta.n.toLowerCase());
+      Mascota.animar('Ese es '+el.dataset.n.toLowerCase()+'. Buscá '+(correcta.art||'el')+' '+correcta.n.toLowerCase());
       setTimeout(()=>{ el.classList.remove('incorrecto'); delete el.dataset.done; if(buena)buena.classList.remove('correcto'); },1500);
     }
   };
@@ -2353,18 +2354,21 @@ function rondaQueFalta(aciertos){
   const lista=Banco.data.queFalta||DEF.queFalta;
   const item=UI.azar(lista);
   const ops=UI.mezclar([[item.ok,true],...item.distract.map(d=>[d,false])]);
+  const esFem = (item.art||'la')==='la';
+  const este = esFem ? 'esta' : 'este';        // esta bicicleta / este auto
+  const alLa = esFem ? 'a la' : 'al';          // a la bicicleta / al auto
   P.innerHTML=`
    <div class="escena">
      <div class="tarjeta">
        <div style="font-size:5rem">${item.obj}</div>
-       <div class="consigna">A esta <b>${item.nom}</b> le falta algo.<br>¿Qué le falta?</div>
-       <button class="btn-sonido" onclick="Voz.hablar('¿Qué le falta a la ${item.nom}?')">🔊 Escuchar</button>
+       <div class="consigna">A ${este} <b>${item.nom}</b> le falta algo.<br>¿Qué le falta?</div>
+       <button class="btn-sonido" onclick="Voz.hablar('¿Qué le falta ${alLa} ${item.nom}?')">🔊 Escuchar</button>
        <div class="fila-emoji" id="ops" style="margin-top:8px">
          ${ops.map(o=>`<div class="opcion-img" data-ok="${o[1]}">${o[0]}</div>`).join('')}
        </div>
      </div>
    </div>`;
-  Voz.hablar('A esta '+item.nom+' le falta algo. ¿Qué le falta?');
+  Voz.hablar('A '+este+' '+item.nom+' le falta algo. ¿Qué le falta?');
   document.getElementById('ops').onclick=e=>{
     const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
     el.dataset.done=1;
@@ -2428,7 +2432,7 @@ function rondaPintar(){
   P.innerHTML=`
    <div class="escena" style="justify-content:flex-start;padding-top:6px">
      <div class="tarjeta" style="gap:10px">
-       <div class="consigna">Pintá el <b>${dib.nom.toLowerCase()}</b> 🎨</div>
+       <div class="consigna">Pintá ${dib.art||'la'} <b>${dib.nom.toLowerCase()}</b> 🎨</div>
        <div id="lienzoWrap" style="position:relative;width:300px;max-width:86vw;aspect-ratio:1;touch-action:none">
          <canvas id="lienzo" width="300" height="300" style="position:absolute;inset:0;width:100%;height:100%;border-radius:18px;background:#fff;box-shadow:var(--sombra)"></canvas>
          <svg id="contorno" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
@@ -2445,7 +2449,7 @@ function rondaPintar(){
        </div>
      </div>
    </div>`;
-  Voz.hablar('Pintá el '+dib.nom.toLowerCase());
+  Voz.hablar('Pintá '+(dib.art||'la')+' '+dib.nom.toLowerCase());
   iniciarLienzo(dib.path);
 }
 
@@ -3352,7 +3356,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 22;
+const APP_VERSION = 23;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

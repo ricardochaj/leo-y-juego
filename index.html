@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 23; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 25; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -618,6 +618,52 @@ const DEF = {
     {nom:'LUNA', art:'la', emoji:'🌙', path:'M60,8 A42,42 0 1,0 60,92 A32,32 0 1,1 60,8 Z'},
     {nom:'GLOBO', art:'el', emoji:'🎈', path:'M50,8 C70,8 78,26 78,42 C78,62 60,72 50,72 C40,72 22,62 22,42 C22,26 30,8 50,8 Z M50,72 L50,92'},
     {nom:'SOL', art:'el', emoji:'☀️', path:'M50,50 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 M50,8 L50,20 M50,80 L50,92 M8,50 L20,50 M80,50 L92,50 M20,20 L28,28 M72,72 L80,80 M80,20 L72,28 M28,72 L20,80'}
+  ],
+  // PICTOGRAMAS del tablero de comunicación (CAA / tipo PECS).
+  // El niño toca uno o varios y la app arma la frase y la dice en voz alta.
+  // cat: categoría para agrupar. txt: lo que se dice/muestra. img: emoji (o img:ID subida).
+  pictos: [
+    // — Acciones / peticiones clave —
+    {cat:'Quiero', txt:'quiero', img:'🙋'},
+    {cat:'Quiero', txt:'más', img:'➕'},
+    {cat:'Quiero', txt:'terminé', img:'✅'},
+    {cat:'Quiero', txt:'no', img:'🚫'},
+    {cat:'Quiero', txt:'sí', img:'👍'},
+    {cat:'Quiero', txt:'ayuda', img:'🆘'},
+    {cat:'Quiero', txt:'por favor', img:'🙏'},
+    {cat:'Quiero', txt:'gracias', img:'😊'},
+    // — Necesidades —
+    {cat:'Necesito', txt:'agua', img:'💧'},
+    {cat:'Necesito', txt:'comida', img:'🍎'},
+    {cat:'Necesito', txt:'baño', img:'🚽'},
+    {cat:'Necesito', txt:'dormir', img:'😴'},
+    {cat:'Necesito', txt:'abrazo', img:'🤗'},
+    {cat:'Necesito', txt:'descanso', img:'🛋️'},
+    {cat:'Necesito', txt:'silencio', img:'🤫'},
+    {cat:'Necesito', txt:'salir', img:'🚪'},
+    // — Sentimientos —
+    {cat:'Me siento', txt:'contento', img:'😀'},
+    {cat:'Me siento', txt:'triste', img:'😢'},
+    {cat:'Me siento', txt:'enojado', img:'😠'},
+    {cat:'Me siento', txt:'asustado', img:'😨'},
+    {cat:'Me siento', txt:'cansado', img:'🥱'},
+    {cat:'Me siento', txt:'nervioso', img:'😰'},
+    {cat:'Me siento', txt:'con dolor', img:'🤕'},
+    {cat:'Me siento', txt:'bien', img:'👌'},
+    // — Actividades —
+    {cat:'Quiero hacer', txt:'jugar', img:'🧸'},
+    {cat:'Quiero hacer', txt:'música', img:'🎵'},
+    {cat:'Quiero hacer', txt:'ver videos', img:'📺'},
+    {cat:'Quiero hacer', txt:'leer', img:'📖'},
+    {cat:'Quiero hacer', txt:'pintar', img:'🎨'},
+    {cat:'Quiero hacer', txt:'ir afuera', img:'🌳'},
+    {cat:'Quiero hacer', txt:'pelota', img:'⚽'},
+    {cat:'Quiero hacer', txt:'upa', img:'🙆'},
+    // — Personas —
+    {cat:'Personas', txt:'mamá', img:'👩'},
+    {cat:'Personas', txt:'papá', img:'👨'},
+    {cat:'Personas', txt:'seño', img:'👩‍🏫'},
+    {cat:'Personas', txt:'amigo', img:'🧒'}
   ]
 };
 
@@ -670,7 +716,7 @@ function formaSilaba(cons, voc, tam=64){
 /* ---------- BANCO: contenido editable (default + lo guardado) ---------- */
 const Banco = {
   data:null,
-  VERSION:8, // subir este número cuando se cambie el contenido por defecto
+  VERSION:9, // subir este número cuando se cambie el contenido por defecto
   cargar(){
     try{ const s=localStorage.getItem('leoyjuego-banco'); this.data = s?JSON.parse(s):this.clonarDefault(); }
     catch(e){ this.data=this.clonarDefault(); }
@@ -679,7 +725,7 @@ const Banco = {
       if(!this.data._editado){ this.data=this.clonarDefault(); }
       this.data._v=this.VERSION; this.guardar();
     }
-    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina','colores','formas','categorias','queFalta','historias','dibujos'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
+    ['palabras','frases','fonico','palabrasLetra','silabeadas','contables','emociones','rutina','colores','formas','categorias','queFalta','historias','dibujos','pictos'].forEach(k=>{ if(!this.data[k]) this.data[k]=JSON.parse(JSON.stringify(DEF[k])); });
   },
   clonarDefault(){ const d=JSON.parse(JSON.stringify(DEF)); d._v=this.VERSION; return d; },
   guardar(){ localStorage.setItem('leoyjuego-banco', JSON.stringify(this.data)); },
@@ -1079,6 +1125,25 @@ const Confeti={ lanzar(){ if(window.Calma&&Calma.activo) return; const cols=['#f
   }}};
 
 /* ---------- MODO CALMA (baja estimulación sensorial) ---------- */
+/* Bitácora emocional: guarda cada vez que el niño marca su estado en el
+   Rincón de la calma. Sirve para que el adulto vea patrones (horarios,
+   frecuencia de días alterados). Se guarda local, sin nube. */
+const Bitacora = {
+  clave:'leoyjuego-bitacora',
+  leer(){ try{ return JSON.parse(localStorage.getItem(this.clave)||'[]'); }catch(e){ return []; } },
+  registrar(nivel, txt){
+    const arr=this.leer();
+    arr.push({ t:Date.now(), nivel, txt });
+    localStorage.setItem(this.clave, JSON.stringify(arr.slice(-300)));
+  },
+  registrarNota(txt){
+    const arr=this.leer();
+    arr.push({ t:Date.now(), nivel:0, txt, nota:true });
+    localStorage.setItem(this.clave, JSON.stringify(arr.slice(-300)));
+  },
+  borrar(){ localStorage.removeItem(this.clave); }
+};
+
 const Calma = {
   activo:false,
   cargar(){ this.activo = localStorage.getItem('leoyjuego-calma')==='1'; this.aplicar(); },
@@ -1179,6 +1244,8 @@ function pantallaMenu(){
     <button class="btn-grande c-coral"   onclick="Nav.ir(modFrases)"><span class="emo">📚</span>Leer Frases</button>
     <button class="btn-grande c-uva"     onclick="Nav.ir(modNumeros)"><span class="emo">➕</span>Números<br>(sumar y restar)</button>
     <button class="btn-grande c-cielo"   onclick="Nav.ir(juegoEmociones)"><span class="emo">😊</span>Emociones</button>
+    <button class="btn-grande c-pasto"   onclick="_caaFrase=[];_caaCat=null;Nav.ir(pantallaCAA)"><span class="emo">🗣️</span>Quiero decir<br>(comunicación)</button>
+    <button class="btn-grande c-cielo"   onclick="Nav.ir(pantallaCalma)"><span class="emo">🧘</span>Rincón de<br>la calma</button>
     <button class="btn-grande c-uva"     onclick="Nav.ir(menuJuegos)"><span class="emo">🎮</span>Juegos</button>
     <button class="btn-grande c-sol"     onclick="Nav.ir(modPronunciacion)"><span class="emo">🎤</span>Pronunciar</button>
     <button class="btn-grande c-pasto"   onclick="Nav.ir(pantallaLogros)"><span class="emo">🏆</span>Mis Logros</button>
@@ -2526,6 +2593,168 @@ function modPronunciacion(){
   };
 }
 
+/* ===================== TABLERO DE COMUNICACIÓN (CAA / tipo PECS) =====================
+   El niño toca pictogramas; se arman en una "tira" arriba y la app dice la frase
+   en voz alta. Le da VOZ a niños no verbales o con poca habla. Offline, editable
+   por el adulto desde el editor de contenido. */
+let _caaFrase=[]; // pictos elegidos en orden
+let _caaCat=null;  // categoría activa (null = todas)
+function pantallaCAA(){
+  const pictos=Banco.data.pictos||DEF.pictos;
+  const cats=[...new Set(pictos.map(p=>p.cat))];
+  if(_caaCat && !cats.includes(_caaCat)) _caaCat=null;
+  const lista = _caaCat ? pictos.filter(p=>p.cat===_caaCat) : pictos;
+  P.innerHTML=`<h1 class="titulo">🗣️ Yo quiero decir…</h1>
+   <div class="escena" style="justify-content:flex-start;padding-top:4px;gap:10px">
+     <!-- Tira de la frase que se va armando -->
+     <div id="caaTira" style="width:100%;min-height:96px;background:#fff;border-radius:16px;box-shadow:var(--sombra);
+          display:flex;align-items:center;gap:8px;padding:10px;overflow-x:auto;flex-wrap:nowrap">
+       ${_caaFrase.length? _caaFrase.map((p,i)=>`
+         <div class="caa-elegido" data-i="${i}" style="flex:0 0 auto;text-align:center;background:var(--cielo);border-radius:12px;padding:6px 8px;min-width:70px">
+           <div style="font-size:2.2rem">${renderImg(p.img,'2.2rem')}</div>
+           <div style="font-size:.75rem;color:#333">${p.txt}</div>
+         </div>`).join('')
+         : `<div style="color:#aaa;font-size:1rem;padding-left:8px">Tocá los dibujos para armar tu mensaje…</div>`}
+     </div>
+     <!-- Botones de la frase -->
+     <div style="display:flex;gap:8px;width:100%">
+       <button class="fab-leer" style="flex:2;background:var(--pasto-hondo)" onclick="caaDecir()">🔊 Decir</button>
+       <button class="btn-grafismo" style="flex:1;background:var(--sol-hondo)" onclick="caaBorrarUltimo()">⬅️ Borrar</button>
+       <button class="btn-grafismo" style="flex:1;background:#cfcfcf" onclick="caaLimpiar()">🗑️ Limpiar</button>
+     </div>
+     <!-- Filtro por categoría -->
+     <div style="display:flex;gap:6px;flex-wrap:wrap;width:100%;justify-content:center">
+       <button class="chip ${_caaCat===null?'sel':''}" onclick="caaCat(null)">Todo</button>
+       ${cats.map(c=>`<button class="chip ${_caaCat===c?'sel':''}" onclick="caaCat('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('')}
+     </div>
+     <!-- Grilla de pictogramas -->
+     <div id="caaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;width:100%">
+       ${lista.map((p,idx)=>`
+         <div class="caa-picto" data-idx="${pictos.indexOf(p)}" style="background:#fff;border-radius:14px;box-shadow:var(--sombra);
+              padding:8px 4px;text-align:center;cursor:pointer">
+           <div style="font-size:2.6rem;line-height:1">${renderImg(p.img,'2.6rem')}</div>
+           <div style="font-size:.8rem;color:#333;margin-top:2px">${p.txt}</div>
+         </div>`).join('')}
+     </div>
+   </div>`;
+  hidratarImgs();
+  document.getElementById('caaGrid').onclick=e=>{
+    const c=e.target.closest('.caa-picto'); if(!c)return;
+    const p=(Banco.data.pictos||DEF.pictos)[+c.dataset.idx]; if(!p)return;
+    _caaFrase.push(p);
+    Voz.hablar(p.txt);               // eco inmediato de cada palabra (refuerzo)
+    c.style.transform='scale(0.9)'; setTimeout(()=>c.style.transform='',120);
+    pintarTiraCAA();
+  };
+  document.getElementById('caaTira').onclick=e=>{
+    const el=e.target.closest('.caa-elegido'); if(!el)return;
+    _caaFrase.splice(+el.dataset.i,1); pintarTiraCAA();
+  };
+}
+function pintarTiraCAA(){
+  // Repinta solo la tira sin recargar toda la pantalla (más fluido)
+  const t=document.getElementById('caaTira'); if(!t)return;
+  t.innerHTML = _caaFrase.length? _caaFrase.map((p,i)=>`
+     <div class="caa-elegido" data-i="${i}" style="flex:0 0 auto;text-align:center;background:var(--cielo);border-radius:12px;padding:6px 8px;min-width:70px">
+       <div style="font-size:2.2rem">${renderImg(p.img,'2.2rem')}</div>
+       <div style="font-size:.75rem;color:#333">${p.txt}</div>
+     </div>`).join('')
+     : `<div style="color:#aaa;font-size:1rem;padding-left:8px">Tocá los dibujos para armar tu mensaje…</div>`;
+  hidratarImgs();
+  t.scrollLeft = t.scrollWidth;
+}
+function caaDecir(){
+  if(!_caaFrase.length){ Voz.hablar('Tocá un dibujo primero'); return; }
+  const frase=_caaFrase.map(p=>p.txt).join(' ');
+  Voz.hablar(frase);
+  Mascota.animar('🗣️ '+frase, false);
+}
+function caaBorrarUltimo(){ _caaFrase.pop(); pintarTiraCAA(); }
+function caaLimpiar(){ _caaFrase=[]; pintarTiraCAA(); }
+function caaCat(c){ _caaCat=c; pantallaCAA(); }
+
+/* ===================== RINCÓN DE LA CALMA =====================
+   Espacio de autorregulación para momentos de sobreestimulación o crisis.
+   - Respiración guiada visual (círculo que se infla/desinfla).
+   - Termómetro emocional (escala de 5) para que identifique su nivel.
+   - Todo con estética baja en estímulos, sin sonidos fuertes ni festejos. */
+let _respInt=null;
+function pantallaCalma(){
+  detenerResp();
+  P.innerHTML=`<h1 class="titulo" style="color:#5a7a9a">🧘 Rincón de la calma</h1>
+   <div class="escena" style="justify-content:flex-start;gap:14px">
+     <p style="color:#667;font-size:.95rem;text-align:center;margin:0 6px">
+       Este es tu lugar tranquilo. Respirá conmigo o mostrame cómo te sentís.
+     </p>
+     <div style="display:flex;gap:10px;width:100%">
+       <button class="fab-leer" style="flex:1;background:#7fa8c9" onclick="verResp()">🌬️ Respirar</button>
+       <button class="fab-leer" style="flex:1;background:#9db88f" onclick="verTermometro()">🌡️ ¿Cómo estoy?</button>
+     </div>
+     <div id="calmaZona" style="width:100%;display:flex;flex-direction:column;align-items:center"></div>
+   </div>`;
+  verResp();
+}
+function verResp(){
+  detenerResp();
+  const z=document.getElementById('calmaZona'); if(!z)return;
+  z.innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:10px">
+      <div id="respTxt" style="font-size:1.3rem;color:#5a7a9a;font-weight:700;min-height:1.6rem">Preparate…</div>
+      <div style="width:220px;height:220px;display:flex;align-items:center;justify-content:center">
+        <div id="respBola" style="width:90px;height:90px;border-radius:50%;
+             background:radial-gradient(circle at 35% 35%, #bfe0ff, #7fa8c9);
+             transition:transform 4s ease-in-out;transform:scale(1)"></div>
+      </div>
+      <p style="color:#889;font-size:.85rem;text-align:center;max-width:280px">
+        Cuando el círculo se hace grande, tomá aire por la nariz. Cuando se hace chico, soltalo por la boca.
+      </p>
+    </div>`;
+  let fase=0; // 0 inhala, 1 mantiene, 2 exhala
+  const bola=document.getElementById('respBola');
+  const txt=document.getElementById('respTxt');
+  const ciclo=()=>{
+    if(!document.getElementById('respBola')){ detenerResp(); return; }
+    if(fase===0){ txt.textContent='Tomá aire… 🌬️'; bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(2.4)'; fase=1; }
+    else if(fase===1){ txt.textContent='Quieto… ✨'; fase=2; }
+    else { txt.textContent='Soltá el aire… 😌'; bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(1)'; fase=0; }
+  };
+  ciclo();
+  _respInt=setInterval(ciclo, 4000);
+}
+function detenerResp(){ if(_respInt){ clearInterval(_respInt); _respInt=null; } }
+function verTermometro(){
+  detenerResp();
+  const z=document.getElementById('calmaZona'); if(!z)return;
+  const niveles=[
+    {n:1, emo:'😌', txt:'Tranquilo', col:'#7fc99a'},
+    {n:2, emo:'🙂', txt:'Bien', col:'#a9d18e'},
+    {n:3, emo:'😐', txt:'Algo inquieto', col:'#f5d76e'},
+    {n:4, emo:'😟', txt:'Nervioso', col:'#f0a860'},
+    {n:5, emo:'😣', txt:'Muy alterado', col:'#e57373'}
+  ];
+  z.innerHTML=`
+    <p style="color:#667;font-size:.95rem;text-align:center;margin:6px 0 10px">Tocá cómo te sentís ahora</p>
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px">
+      ${niveles.map(l=>`
+        <div class="term-nivel" data-n="${l.n}" data-txt="${l.txt}" style="display:flex;align-items:center;gap:12px;
+             background:${l.col};border-radius:14px;padding:10px 14px;cursor:pointer;box-shadow:var(--sombra)">
+          <span style="font-size:2rem">${l.emo}</span>
+          <span style="font-size:1.05rem;font-weight:700;color:#3a3a3a">${l.txt}</span>
+        </div>`).join('')}
+    </div>
+    <div id="termResp" style="margin-top:14px;text-align:center;min-height:2rem;font-size:1rem;color:#5a7a9a"></div>`;
+  z.querySelector('div[style*="flex-direction:column"]').onclick=e=>{
+    const el=e.target.closest('.term-nivel'); if(!el)return;
+    const nivel=+el.dataset.n, txt=el.dataset.txt;
+    // Registramos el estado emocional para el informe del adulto (bitácora)
+    Bitacora.registrar(nivel, txt);
+    const r=document.getElementById('termResp');
+    if(nivel<=2){ r.textContent='¡Qué bueno! Gracias por contarme. 💚'; Voz.hablar('Me alegro'); }
+    else if(nivel===3){ r.innerHTML='Está bien. ¿Respiramos juntos un ratito?<br><button class="btn-grafismo" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Sí, respirar</button>'; }
+    else { r.innerHTML='Gracias por avisarme. Vamos a calmarnos juntos.<br><button class="fab-leer" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Respirar conmigo</button>'; Voz.hablar('Vamos a calmarnos juntos'); }
+  };
+}
+
 /* ===================== RUTINA VISUAL (pictogramas) =====================
    Muy útil en TEA: muestra la secuencia del día, el nene marca lo que va
    cumpliendo. Da previsibilidad y baja la ansiedad por anticipación. */
@@ -2548,6 +2777,7 @@ function pantallaRutina(){
      </div>
      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
        <button class="btn-grafismo" onclick="reiniciarRutina()">🔄 Empezar de nuevo</button>
+       <button class="btn-grafismo" style="background:var(--uva)" onclick="Nav.ir(pantallaPrimeroDespues)">1️⃣2️⃣ Primero / Después</button>
        <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="Nav.ir(pantallaTimer)">⏳ Temporizador</button>
      </div>
    </div>`;
@@ -2563,6 +2793,49 @@ function pantallaRutina(){
   };
 }
 function reiniciarRutina(){ localStorage.setItem('leoyjuego-rutina-hechos','[]'); pantallaRutina(); Mascota.animar('¡A empezar!'); }
+
+/* ===================== AGENDA "PRIMERO / DESPUÉS" =====================
+   Muestra SOLO el paso actual y el siguiente, en grande y sin distracciones.
+   La estructura "primero X, después Y" es una de las ayudas más usadas en TEA
+   para las transiciones (saber qué viene baja la resistencia al cambio). */
+function pantallaPrimeroDespues(){
+  const lista=Banco.data.rutina||DEF.rutina;
+  const hechos=JSON.parse(localStorage.getItem('leoyjuego-rutina-hechos')||'[]');
+  const pend=lista.map((p,i)=>({p,i})).filter(x=>!hechos.includes(x.i));
+  if(!pend.length){
+    P.innerHTML=`<h1 class="titulo">1️⃣2️⃣ Primero / Después</h1>
+     <div class="escena"><div class="tarjeta">
+       <div style="font-size:4rem">🎉</div>
+       <div class="consigna">¡Terminaste todo por hoy!</div>
+       <button class="btn-grafismo" style="margin-top:12px" onclick="reiniciarRutina();Nav.ir(pantallaPrimeroDespues)">🔄 Empezar de nuevo</button>
+     </div></div>`;
+    return;
+  }
+  const primero=pend[0], despues=pend[1];
+  P.innerHTML=`<h1 class="titulo">¿Qué sigue?</h1>
+   <div class="escena" style="gap:16px">
+     <div style="width:100%;max-width:360px;background:var(--pasto);border-radius:20px;padding:16px;text-align:center;box-shadow:var(--sombra)">
+       <div style="font-size:1.1rem;color:#2a6a3a;font-weight:800;letter-spacing:1px">PRIMERO</div>
+       <div style="font-size:5.5rem;line-height:1.1">${primero.p.ico}</div>
+       <div style="font-size:1.5rem;font-weight:700;color:#333">${primero.p.txt}</div>
+     </div>
+     <div style="font-size:2rem;color:#bbb">⬇️</div>
+     <div style="width:100%;max-width:360px;background:${despues?'var(--cielo)':'#f0f0f0'};border-radius:20px;padding:16px;text-align:center;box-shadow:var(--sombra);opacity:${despues?1:.5}">
+       <div style="font-size:1.1rem;color:#2a5a8a;font-weight:800;letter-spacing:1px">DESPUÉS</div>
+       <div style="font-size:4.5rem;line-height:1.1">${despues?despues.p.ico:'🏁'}</div>
+       <div style="font-size:1.3rem;font-weight:700;color:#333">${despues?despues.p.txt:'¡Listo!'}</div>
+     </div>
+     <button class="fab-leer" style="width:100%;max-width:360px;background:var(--pasto-hondo)" onclick="cumplirPrimero(${primero.i})">✅ ¡Ya hice esto!</button>
+   </div>`;
+  Voz.hablar('Primero, '+primero.p.txt+(despues?'. Después, '+despues.p.txt:''));
+}
+function cumplirPrimero(i){
+  let h=JSON.parse(localStorage.getItem('leoyjuego-rutina-hechos')||'[]');
+  if(!h.includes(i)){ h.push(i); localStorage.setItem('leoyjuego-rutina-hechos', JSON.stringify(h)); }
+  Estado.sumarEstrella(); Mascota.animar('¡Muy bien!');
+  pantallaPrimeroDespues();
+}
+
 
 /* ===================== TEMPORIZADOR VISUAL =====================
    Reloj circular que se vacía. Ayuda con las transiciones entre
@@ -2816,6 +3089,14 @@ function pantallaPadres(){
        <p style="font-size:.82rem;color:#666;margin:6px 0">Grabá vos los sonidos (mmm, sss…) y las sílabas. La app los usa en lugar de la voz del sistema.</p>
        <button class="btn-grafismo" style="width:100%" onclick="Nav.ir(pantallaGrabar)">🎙️ Abrir grabador</button>
      </div>
+     <div style="margin-top:14px"><b>📔 Registro emocional del niño</b>
+       <p style="font-size:.82rem;color:#666;margin:6px 0">Lo que el niño marcó en el Rincón de la calma, con horarios y patrones. Útil para vos, la maestra o el terapeuta.</p>
+       <button class="btn-grafismo" style="width:100%;background:var(--cielo-hondo)" onclick="Nav.ir(pantallaBitacora)">📔 Ver registro y patrones</button>
+     </div>
+     <div style="margin-top:14px"><b>🧒 Modo Niño (que no salga de la app)</b>
+       <p style="font-size:.82rem;color:#666;margin:6px 0">Deja la app fijada en la pantalla. El niño no puede salir ni abrir otras apps sin la clave. Ideal para que use Leo y Juego sin tocar nada más del teléfono.</p>
+       <button class="btn-grafismo" style="width:100%;background:var(--pasto-hondo)" onclick="Nav.ir(pantallaModoNino)">🧒 Abrir Modo Niño</button>
+     </div>
      <div style="margin-top:14px"><b>✏️ Editar contenido</b>
        <p style="font-size:.82rem;color:#666;margin:6px 0">Agregá o sacá palabras, frases y letras. Subí tus propias imágenes.</p>
        <button class="btn-grafismo" style="width:100%;background:var(--uva)" onclick="Nav.ir(pantallaEditor)">✏️ Abrir editor</button>
@@ -2833,6 +3114,160 @@ function pantallaPadres(){
 function nivelActual(){ const c=MUNDOS.filter(m=>(Estado.data.mundos[m.id]||0)>=40).length; return MUNDOS[Math.min(c,MUNDOS.length-1)].nombre; }
 function setModoFonico(modo){ Estado.data.modoFonico=modo; Estado.guardar(); Mascota.animar(modo==='aleatorio'?'Modo aleatorio':'Modo en orden',false); pantallaPadres(); }
 function setVozLang(code){ Estado.data.vozLang=code; Estado.guardar(); pantallaPadres(); setTimeout(()=>Voz.hablar('be, to, rra, gato'),200); }
+
+/* ===================== MODO NIÑO (anclar pantalla) =====================
+   En Android existe "Anclar pantalla" (Screen Pinning): deja UNA app fija y el
+   niño no puede salir sin PIN/huella. NO lo controla la app por sí sola: el
+   padre lo activa una vez en Ajustes y después puede anclar desde el botón
+   "apps recientes". Acá explicamos cómo hacerlo, paso a paso y según el teléfono.
+   Si en el futuro se agrega un plugin nativo de lock-task, este botón ya queda
+   listo para usarlo automáticamente. */
+function modoNinoNativoDisponible(){
+  try{ return !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenPin); }
+  catch(e){ return false; }
+}
+function pantallaModoNino(){
+  const enApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const nativo = modoNinoNativoDisponible();
+  P.innerHTML=`<h1 class="titulo">🧒 Modo Niño</h1>
+   <div class="form">
+     <div class="dato" style="background:var(--pasto);color:#1a4a2a">
+       <span>¿Qué hace?</span><b>Fija la app en pantalla</b>
+     </div>
+     <p style="font-size:.9rem;color:#555;margin:10px 0 4px">
+       Con el <b>Modo Niño</b>, Leo y Juego queda <b>pegada en la pantalla</b>.
+       El niño puede jugar tranquilo pero <b>no puede salir</b> a otras apps,
+       ni a internet, ni tocar nada del teléfono, hasta que vos lo desbloquees
+       con tu PIN o huella.
+     </p>
+
+     ${nativo ? `
+     <button class="fab-leer" style="width:100%;background:var(--pasto-hondo);margin-top:8px" onclick="activarModoNinoNativo()">
+       🔒 Activar Modo Niño ahora
+     </button>
+     <p style="font-size:.8rem;color:#888;margin-top:6px">Para salir: pedí el teléfono a un adulto. Se desbloquea con la clave del dispositivo.</p>
+     ` : `
+     <div style="margin-top:12px;background:#fff7e6;border-radius:14px;padding:12px">
+       <b style="color:#b06a00">📌 Se activa una sola vez, así:</b>
+       <p style="font-size:.85rem;color:#555;margin:8px 0 4px"><b>Paso 1 — Prender la función (una vez):</b></p>
+       <ol style="font-size:.85rem;color:#555;margin:0;padding-left:18px;line-height:1.5">
+         <li>Andá a <b>Ajustes</b> del teléfono.</li>
+         <li>Buscá <b>"Anclar pantalla"</b> o <b>"Fijar app"</b> (suele estar en <b>Seguridad</b> o <b>Seguridad y privacidad</b>).</li>
+         <li><b>Activala.</b> Activá también <b>"Pedir PIN para dejar de fijar"</b> 👈 importante.</li>
+       </ol>
+       <p style="font-size:.85rem;color:#555;margin:10px 0 4px"><b>Paso 2 — Anclar Leo y Juego (cada vez):</b></p>
+       <ol style="font-size:.85rem;color:#555;margin:0;padding-left:18px;line-height:1.5">
+         <li>Con la app abierta, tocá el botón de <b>apps recientes</b> (el cuadradito ▢ o deslizá hacia arriba y mantené).</li>
+         <li>En la tarjeta de <b>Leo y Juego</b>, tocá su <b>ícono</b> arriba y elegí <b>"Fijar"</b> / <b>"Anclar"</b> 📌.</li>
+       </ol>
+       <p style="font-size:.85rem;color:#555;margin:10px 0 4px"><b>Para salir (vos):</b> mantené apretados <b>Atrás + Inicio</b> (o Atrás + Recientes) y poné tu PIN.</p>
+     </div>
+     <button class="fab-leer" style="width:100%;background:var(--cielo-hondo);margin-top:12px" onclick="abrirAjustesSeguridad()">
+       ⚙️ Intentar abrir Ajustes
+     </button>
+     <p style="font-size:.78rem;color:#999;margin-top:6px;text-align:center">Si el botón no abre nada, entrá a mano: Ajustes → Seguridad → Anclar pantalla.</p>
+     `}
+
+     <div style="margin-top:16px;background:#eef4ff;border-radius:14px;padding:12px">
+       <b style="color:#2a5a9a">💡 ¿Querés controlar TODO el teléfono?</b>
+       <p style="font-size:.84rem;color:#555;margin:8px 0 0">
+         Para <b>bloquear otras apps, cortar internet o poner límites de tiempo</b>,
+         Android tiene una herramienta gratis de Google llamada <b>Family Link</b>.
+         Esto no lo puede hacer Leo y Juego por sí sola (ninguna app puede controlar
+         a las demás), pero Family Link sí, y es de Google. Buscala como
+         <b>"Family Link"</b> en Play Store.
+       </p>
+     </div>
+
+     <button class="btn-grafismo" style="width:100%;margin-top:16px" onclick="Nav.volver()">⬅️ Volver</button>
+   </div>`;
+}
+function activarModoNinoNativo(){
+  try{
+    const P=window.Capacitor.Plugins.ScreenPin;
+    if(P && P.start){ P.start(); Mascota.animar('Modo Niño activado',false); }
+    else { Mascota.animar('No disponible en este teléfono',false); }
+  }catch(e){ Mascota.animar('No se pudo activar',false); }
+}
+function abrirAjustesSeguridad(){
+  // Intentamos abrir los Ajustes del sistema. Si hay plugin nativo, lo usamos;
+  // si no, avisamos que hay que entrar a mano (no se puede abrir desde la web).
+  try{
+    const Cap=window.Capacitor;
+    if(Cap && Cap.Plugins && Cap.Plugins.App && Cap.Plugins.App.openSettings){
+      Cap.Plugins.App.openSettings(); return;
+    }
+  }catch(e){}
+  Mascota.animar('Entrá a mano: Ajustes → Seguridad → Anclar pantalla',false);
+}
+
+/* ===================== BITÁCORA EMOCIONAL (informe para el adulto) ===================== */
+function pantallaBitacora(){
+  const reg=Bitacora.leer().slice().reverse(); // más recientes primero
+  const fmt=t=>{ const d=new Date(t); return d.toLocaleDateString()+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); };
+  // Patrón por franja horaria (para ver si se altera siempre a la misma hora)
+  const franjas={ 'Mañana (6-12)':0, 'Mediodía (12-15)':0, 'Tarde (15-19)':0, 'Noche (19-24)':0, 'Madrugada (0-6)':0 };
+  let alterados=0;
+  reg.forEach(r=>{
+    if(r.nota) return;
+    if(r.nivel>=4){ alterados++;
+      const h=new Date(r.t).getHours();
+      if(h>=6&&h<12) franjas['Mañana (6-12)']++;
+      else if(h>=12&&h<15) franjas['Mediodía (12-15)']++;
+      else if(h>=15&&h<19) franjas['Tarde (15-19)']++;
+      else if(h>=19) franjas['Noche (19-24)']++;
+      else franjas['Madrugada (0-6)']++;
+    }
+  });
+  const maxFranja=Math.max(1,...Object.values(franjas));
+  const emoNivel=n=>['📝','😌','🙂','😐','😟','😣'][n]||'•';
+  P.innerHTML=`<h1 class="titulo">📔 Registro emocional</h1>
+   <div class="form">
+     <div class="dato"><span>Total de registros</span><b>${reg.filter(r=>!r.nota).length}</b></div>
+     <div class="dato" style="background:${alterados>0?'#ffecec':'var(--pasto)'}"><span>Momentos muy alterados</span><b>${alterados}</b></div>
+
+     <div style="margin-top:14px"><b>⏰ ¿Cuándo se altera más?</b>
+       <p style="font-size:.8rem;color:#666;margin:6px 0">Franjas donde marcó "nervioso" o "muy alterado". Si ves un patrón (siempre a la misma hora), puede ayudar a anticiparlo.</p>
+       ${alterados? Object.entries(franjas).map(([f,n])=>`
+         <div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+           <span style="font-size:.8rem;width:120px;color:#555">${f}</span>
+           <div style="flex:1;background:#eee;border-radius:8px;height:18px;overflow:hidden">
+             <div style="width:${Math.round(n/maxFranja*100)}%;height:100%;background:${n?'#f0a860':'#eee'}"></div>
+           </div>
+           <b style="width:22px;text-align:right;font-size:.85rem">${n}</b>
+         </div>`).join('') : '<p style="color:#888;font-size:.85rem">Sin momentos de alteración registrados. 🎉</p>'}
+     </div>
+
+     <div style="margin-top:14px"><b>✍️ Agregar una nota</b>
+       <p style="font-size:.8rem;color:#666;margin:6px 0">Anotá algo que observaste (ej: "se alteró al cambiar de actividad").</p>
+       <div style="display:flex;gap:6px">
+         <input id="bitNota" placeholder="Escribí una observación…" style="flex:1;padding:10px;border-radius:10px;border:1px solid #ccc">
+         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="agregarNotaBitacora()">➕</button>
+       </div>
+     </div>
+
+     <div style="margin-top:14px"><b>🕑 Historial reciente</b>
+       <div style="margin-top:8px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+         ${reg.length? reg.slice(0,60).map(r=>`
+           <div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:8px 10px;box-shadow:var(--sombra)">
+             <span style="font-size:1.4rem">${r.nota?'📝':emoNivel(r.nivel)}</span>
+             <div style="flex:1">
+               <div style="font-size:.9rem;color:#333">${r.txt||''}</div>
+               <div style="font-size:.72rem;color:#999">${fmt(r.t)}</div>
+             </div>
+           </div>`).join('') : '<p style="color:#888;font-size:.85rem">Todavía no hay registros. Aparecen cuando el niño usa el Rincón de la calma.</p>'}
+       </div>
+     </div>
+
+     ${reg.length?`<button class="btn-sonido" style="margin-top:12px" onclick="if(confirm('¿Borrar todo el registro emocional?')){Bitacora.borrar();pantallaBitacora();}">🗑️ Borrar registro</button>`:''}
+   </div>`;
+}
+function agregarNotaBitacora(){
+  const inp=document.getElementById('bitNota'); if(!inp)return;
+  const txt=inp.value.trim(); if(!txt)return;
+  Bitacora.registrarNota(txt); inp.value=''; pantallaBitacora();
+}
+
 
 /* --- Probador y ajuste de pronunciación de sílabas ---
    El motor de voz a veces lee mal sílabas sueltas. Acá el padre escucha cada
@@ -3356,7 +3791,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 23;
+const APP_VERSION = 25;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

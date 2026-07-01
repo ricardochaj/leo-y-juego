@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 25; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 26; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -2687,8 +2687,8 @@ function pantallaCalma(){
        Este es tu lugar tranquilo. Respirá conmigo o mostrame cómo te sentís.
      </p>
      <div style="display:flex;gap:10px;width:100%">
-       <button class="fab-leer" style="flex:1;background:#7fa8c9" onclick="verResp()">🌬️ Respirar</button>
-       <button class="fab-leer" style="flex:1;background:#9db88f" onclick="verTermometro()">🌡️ ¿Cómo estoy?</button>
+       <button class="fab-leer" style="flex:1;background:#7fa8c9" onclick="Voz.hablar('Respirar');verResp()">🌬️ Respirar</button>
+       <button class="fab-leer" style="flex:1;background:#9db88f" onclick="Voz.hablar('¿Cómo estoy?');verTermometro()">🌡️ ¿Cómo estoy?</button>
      </div>
      <div id="calmaZona" style="width:100%;display:flex;flex-direction:column;align-items:center"></div>
    </div>`;
@@ -2714,11 +2714,12 @@ function verResp(){
   const txt=document.getElementById('respTxt');
   const ciclo=()=>{
     if(!document.getElementById('respBola')){ detenerResp(); return; }
-    if(fase===0){ txt.textContent='Tomá aire… 🌬️'; bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(2.4)'; fase=1; }
-    else if(fase===1){ txt.textContent='Quieto… ✨'; fase=2; }
-    else { txt.textContent='Soltá el aire… 😌'; bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(1)'; fase=0; }
+    if(fase===0){ txt.textContent='Tomá aire… 🌬️'; Voz.hablar('Tomá aire'); bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(2.4)'; fase=1; }
+    else if(fase===1){ txt.textContent='Quieto… ✨'; Voz.hablar('Quieto'); fase=2; }
+    else { txt.textContent='Soltá el aire… 😌'; Voz.hablar('Soltá el aire'); bola.style.transition='transform 4s ease-in-out'; bola.style.transform='scale(1)'; fase=0; }
   };
-  ciclo();
+  Voz.hablar('Respirá conmigo. Mirá el círculo.');
+  setTimeout(ciclo, 1200);
   _respInt=setInterval(ciclo, 4000);
 }
 function detenerResp(){ if(_respInt){ clearInterval(_respInt); _respInt=null; } }
@@ -2743,15 +2744,17 @@ function verTermometro(){
         </div>`).join('')}
     </div>
     <div id="termResp" style="margin-top:14px;text-align:center;min-height:2rem;font-size:1rem;color:#5a7a9a"></div>`;
+  Voz.hablar('¿Cómo te sentís? Tocá una carita.');
   z.querySelector('div[style*="flex-direction:column"]').onclick=e=>{
     const el=e.target.closest('.term-nivel'); if(!el)return;
     const nivel=+el.dataset.n, txt=el.dataset.txt;
+    Voz.hablar(txt);
     // Registramos el estado emocional para el informe del adulto (bitácora)
     Bitacora.registrar(nivel, txt);
     const r=document.getElementById('termResp');
-    if(nivel<=2){ r.textContent='¡Qué bueno! Gracias por contarme. 💚'; Voz.hablar('Me alegro'); }
-    else if(nivel===3){ r.innerHTML='Está bien. ¿Respiramos juntos un ratito?<br><button class="btn-grafismo" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Sí, respirar</button>'; }
-    else { r.innerHTML='Gracias por avisarme. Vamos a calmarnos juntos.<br><button class="fab-leer" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Respirar conmigo</button>'; Voz.hablar('Vamos a calmarnos juntos'); }
+    if(nivel<=2){ r.textContent='¡Qué bueno! Gracias por contarme. 💚'; setTimeout(()=>Voz.hablar('Me alegro'),700); }
+    else if(nivel===3){ r.innerHTML='Está bien. ¿Respiramos juntos un ratito?<br><button class="btn-grafismo" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Sí, respirar</button>'; setTimeout(()=>Voz.hablar('¿Respiramos juntos?'),700); }
+    else { r.innerHTML='Gracias por avisarme. Vamos a calmarnos juntos.<br><button class="fab-leer" style="margin-top:8px;background:#7fa8c9" onclick="verResp()">🌬️ Respirar conmigo</button>'; setTimeout(()=>Voz.hablar('Vamos a calmarnos juntos'),700); }
   };
 }
 
@@ -3791,7 +3794,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 25;
+const APP_VERSION = 26;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

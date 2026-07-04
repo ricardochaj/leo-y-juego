@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 30; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 31; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -1182,6 +1182,7 @@ const Nav={
     if(typeof _tocarInt!=='undefined' && _tocarInt){ clearInterval(_tocarInt); _tocarInt=null; }
     if(typeof _tocarTimeout!=='undefined' && _tocarTimeout){ clearTimeout(_tocarTimeout); _tocarTimeout=null; }
     if(typeof _respInt!=='undefined' && _respInt){ clearInterval(_respInt); _respInt=null; }
+    if(typeof _yogaRespInt!=='undefined' && _yogaRespInt){ clearInterval(_yogaRespInt); _yogaRespInt=null; }
   },
   // El botón volver se muestra siempre que NO estemos en el menú o el perfil inicial.
   _actualizarBotones(){
@@ -1258,6 +1259,7 @@ function pantallaMenu(){
     <button class="btn-grande c-cielo"   onclick="Nav.ir(juegoEmociones)"><span class="emo">😊</span>Emociones</button>
     <button class="btn-grande c-pasto"   onclick="_caaFrase=[];_caaCat=null;Nav.ir(pantallaCAA)"><span class="emo">🗣️</span>Quiero decir<br>(comunicación)</button>
     <button class="btn-grande c-cielo"   onclick="Nav.ir(pantallaCalma)"><span class="emo">🧘</span>Rincón de<br>la calma</button>
+    <button class="btn-grande c-uva"     onclick="Nav.ir(menuYoga)"><span class="emo">🧘</span>Yoga para<br>calmarse</button>
     <button class="btn-grande c-sol"     onclick="Nav.ir(menuMotricidad)"><span class="emo">✋</span>Mi cuerpo<br>y mis manos</button>
     <button class="btn-grande c-uva"     onclick="Nav.ir(menuJuegos)"><span class="emo">🎮</span>Juegos</button>
     <button class="btn-grande c-sol"     onclick="Nav.ir(modPronunciacion)"><span class="emo">🎤</span>Pronunciar</button>
@@ -2497,6 +2499,135 @@ function rondaHistoria(aciertos){
       setTimeout(()=>el.classList.remove('incorrecto'),800);
     }
   };
+}
+
+/* ===================== MÓDULO · YOGA PARA CALMARSE =====================
+   Yoga suave pensado para niños con TEA. Objetivos: autorregulación,
+   conciencia corporal y calma. Principios aplicados:
+   - Secuencia CORTA y PREDECIBLE (siempre el mismo arco): respirar → posturas → respirar.
+   - Instrucciones por VOZ (para quien no lee) y con metáforas concretas (animales/cosas).
+   - Baja estimulación: colores suaves, SIN confeti ni sonidos fuertes, sin apuro ni puntaje.
+   - El niño avanza a su ritmo con "Ya lo hice"; puede repetir la voz o saltear.
+   Reutiliza el patrón de respiración del Rincón de la Calma. */
+
+const POSTURAS_YOGA=[
+  {emoji:'⛰️', nom:'la montaña', voz:'Parate derecho y quieto como una montaña grande y fuerte. Respirá tranquilo.', seg:'Pies juntos, brazos al costado, bien derecho.'},
+  {emoji:'🌳', nom:'el árbol', voz:'Parate en un pie y apoyá el otro en la pierna. Abrí los brazos como las ramas de un árbol.', seg:'Si te cuesta, apoyate en la pared. Después cambiá de pie.'},
+  {emoji:'🦋', nom:'la mariposa', voz:'Sentate en el piso, juntá los pies y movés las piernas despacio como alas de mariposa.', seg:'Agarrate los pies con las manos.'},
+  {emoji:'🐱', nom:'el gato', voz:'Ponete en cuatro patas como un gato. Bajá la panza y mirá para arriba. Después redondeá la espalda.', seg:'Despacio, como un gatito que se estira.'},
+  {emoji:'🐶', nom:'el perro', voz:'Apoyá las manos y los pies en el piso y levantá la cola bien alto, como un perro que se estira.', seg:'Empujá el piso con las manos.'},
+  {emoji:'🐸', nom:'la rana', voz:'Agachate como una rana, con las manos en el piso entre las piernas. Respirá.', seg:'Podés dar un saltito suave si querés.'},
+  {emoji:'🐍', nom:'la serpiente', voz:'Acostate boca abajo y levantá despacio el pecho con las manos, como una serpiente que asoma la cabeza.', seg:'Sacá la lengua y hacé "sssss".'},
+  {emoji:'⭐', nom:'la estrella', voz:'Parate y abrí bien los brazos y las piernas, como una estrella grande que brilla.', seg:'Estirate todo lo que puedas.'},
+  {emoji:'🚣', nom:'el bote', voz:'Sentate, levantá las piernas y estirá los brazos adelante, equilibrándote como un bote en el agua.', seg:'Aguantá contando hasta tres.'},
+  {emoji:'🌙', nom:'la luna', voz:'Parate derecho, juntá las manos arriba y inclinate despacio a un lado, como una luna. Después al otro lado.', seg:'Despacio, sin forzar.'},
+  {emoji:'🐌', nom:'el caracol', voz:'Sentate sobre tus pies, agachá la cabeza y hacete chiquito y enroscado como un caracol tranquilo.', seg:'Quedate quieto y respirá. Esta es de descanso.'},
+  {emoji:'🕯️', nom:'la vela', voz:'Acostate, subí las piernas derechas hacia arriba como una vela. Apoyá la cintura con las manos.', seg:'Solo si te sentís cómodo. Si no, dejá las piernas en el piso.'}
+];
+
+/* Secuencia fija de la sesión (predecible): 6 posturas + respiraciones.
+   Elegimos SIEMPRE las mismas primeras para dar previsibilidad, pero el padre
+   puede tocar "otra postura" para variar. */
+const _yogaSecuencia=[0,1,3,4,6,10]; // montaña, árbol, gato, perro, serpiente, caracol (descanso)
+let _yogaPaso=0;
+let _yogaRespInt=null;
+
+function menuYoga(){
+  detenerYogaResp();
+  P.innerHTML=`<h1 class="titulo" style="color:#7a6a9a">🧘 Yoga para calmarse</h1>
+   <div class="escena" style="justify-content:flex-start;gap:16px">
+     <div style="font-size:5.5rem;line-height:1">🧘</div>
+     <p style="color:#667;font-size:1rem;text-align:center;margin:0 10px;max-width:320px">
+       Vamos a movernos despacio y respirar para sentirnos tranquilos.
+       No hay apuro. Hacé lo que puedas.
+     </p>
+     <button class="fab-leer" style="width:100%;max-width:340px;background:#9d8fb8" onclick="empezarYoga()">▶️ Empezar</button>
+     <button class="btn-grafismo" style="background:#a9bfa0" onclick="yogaPosturaLibre()">🎲 Una postura suelta</button>
+   </div>`;
+  Voz.hablar('Bienvenido al yoga. Vamos a calmarnos juntos. Cuando quieras, tocá empezar.');
+}
+
+function empezarYoga(){
+  _yogaPaso=0;
+  yogaRespirar('inicio');
+}
+
+/* Respiración guiada (entrada y salida). Reutiliza la idea del Rincón de la Calma:
+   un círculo que se agranda al inhalar y se achica al exhalar, con voz. */
+function yogaRespirar(momento){
+  detenerYogaResp();
+  const esInicio = momento==='inicio';
+  P.innerHTML=`<h1 class="titulo" style="color:#7a6a9a">🧘 ${esInicio?'Respiremos para empezar':'Respiremos para terminar'}</h1>
+   <div class="escena" style="gap:20px">
+     <div id="yogaRespTxt" style="font-size:1.3rem;color:#7a6a9a;font-weight:700;min-height:1.6rem">Preparate…</div>
+     <div style="width:220px;height:220px;display:flex;align-items:center;justify-content:center">
+       <div id="yogaBola" style="width:90px;height:90px;border-radius:50%;
+            background:radial-gradient(circle at 35% 35%, #e0d4f5, #9d8fb8);
+            transition:transform 4s ease-in-out;transform:scale(1)"></div>
+     </div>
+     <p style="color:#889;font-size:.85rem;text-align:center;max-width:280px">
+       Cuando el círculo se hace grande, tomá aire. Cuando se hace chico, soltalo.
+     </p>
+     <button class="fab-leer" style="width:100%;max-width:340px;background:#9d8fb8" onclick="${esInicio?'yogaSiguientePostura()':'menuYoga()'}">
+       ${esInicio?'✅ Listo, a las posturas':'🙏 Terminar'}
+     </button>
+   </div>`;
+  let fase=0;
+  const bola=document.getElementById('yogaBola');
+  const txt=document.getElementById('yogaRespTxt');
+  const ciclo=()=>{
+    if(!document.getElementById('yogaBola')){ detenerYogaResp(); return; }
+    if(fase===0){ txt.textContent='Tomá aire… 🌬️'; Voz.hablar('Tomá aire'); bola.style.transform='scale(2.4)'; fase=1; }
+    else if(fase===1){ txt.textContent='Quieto… ✨'; Voz.hablar('Quieto'); fase=2; }
+    else { txt.textContent='Soltá el aire… 😌'; Voz.hablar('Soltá el aire'); bola.style.transform='scale(1)'; fase=0; }
+  };
+  Voz.hablar(esInicio?'Vamos a respirar para empezar. Mirá el círculo.':'Muy bien. Respiremos para terminar, bien tranquilos.');
+  setTimeout(ciclo, 1400);
+  _yogaRespInt=setInterval(ciclo, 4000);
+}
+function detenerYogaResp(){ if(_yogaRespInt){ clearInterval(_yogaRespInt); _yogaRespInt=null; } }
+
+function yogaSiguientePostura(){
+  detenerYogaResp();
+  if(_yogaPaso>=_yogaSecuencia.length){ yogaRespirar('fin'); return; }
+  const post=POSTURAS_YOGA[_yogaSecuencia[_yogaPaso]];
+  pintarPosturaYoga(post, _yogaPaso+1, _yogaSecuencia.length, false);
+}
+
+function pintarPosturaYoga(post, num, total, suelta){
+  P.innerHTML=`<h1 class="titulo" style="color:#7a6a9a">🧘 Yoga</h1>
+   <div class="escena" style="gap:14px">
+     <div class="tarjeta" style="gap:14px;background:linear-gradient(#fff,#f5f1fa)">
+       ${total?`<div style="font-size:1rem;color:#999">Postura ${num} de ${total}</div>`:''}
+       <div style="font-size:7.5rem;line-height:1">${post.emoji}</div>
+       <div class="consigna" style="font-size:1.5rem;color:#6a5a8a">${post.nom.charAt(0).toUpperCase()+post.nom.slice(1)}</div>
+       <div style="font-size:1rem;color:#778;text-align:center;max-width:300px">${post.seg}</div>
+       <button class="fab-leer" style="width:100%;max-width:340px;background:#9d8fb8" onclick="yogaEscuchar()">🔊 Escuchar otra vez</button>
+       ${suelta
+         ? `<button class="fab-leer" style="width:100%;max-width:340px;background:#a9bfa0" onclick="yogaPosturaLibre()">🎲 Otra postura</button>
+            <button class="btn-grafismo" onclick="menuYoga()">🙏 Terminar</button>`
+         : `<button class="fab-leer" style="width:100%;max-width:340px;background:#a9bfa0" onclick="yogaAvanzar()">✅ Ya lo hice</button>`}
+     </div>
+   </div>`;
+  // guardamos la postura actual para el botón "escuchar otra vez"
+  window._yogaPosturaActual=post;
+  setTimeout(()=>Voz.hablar(post.nom+'. '+post.voz), 300);
+}
+function yogaAvanzar(){
+  _yogaPaso++;
+  yogaSiguientePostura();
+}
+function yogaEscuchar(){
+  const p=window._yogaPosturaActual;
+  if(p) Voz.hablar(p.nom+'. '+p.voz);
+}
+
+/* Postura suelta al azar (para practicar una sin hacer toda la secuencia) */
+let _yogaLibreIdx=-1;
+function yogaPosturaLibre(){
+  detenerYogaResp();
+  _yogaLibreIdx=proxIndiceMot(_yogaLibreIdx, POSTURAS_YOGA.length);
+  pintarPosturaYoga(POSTURAS_YOGA[_yogaLibreIdx], 0, 0, true);
 }
 
 /* ===================== MÓDULO · MI CUERPO Y MIS MANOS =====================
@@ -4199,7 +4330,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 30;
+const APP_VERSION = 31;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

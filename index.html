@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 27; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 30; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -892,8 +892,10 @@ const Voz = {
     // 1) En la app empaquetada: usar el motor nativo de Android (confiable)
     const TTS=this.ttsNativo();
     if(TTS){
-      try{
-        TTS.stop().catch(()=>{});
+      // Encadenamos: primero paramos lo que esté sonando y RECIÉN cuando el stop
+      // terminó, hablamos. Si disparábamos stop() y speak() a la vez, en la
+      // segunda pulsación seguida el stop cancelaba al speak nuevo y no sonaba nada.
+      const hablarNativo=()=>{
         TTS.speak({
           text:texto,
           lang:(Estado.data&&Estado.data.vozLang)||'es-US',
@@ -902,8 +904,13 @@ const Voz = {
           volume:1.0,
           category:'playback'
         }).then(()=>{this._ultimoError='ok';}).catch(e=>{this._ultimoError='nativo:'+(e&&e.message||'err');});
+      };
+      try{
+        const st=TTS.stop();
+        if(st && typeof st.then==='function'){ st.then(hablarNativo).catch(hablarNativo); }
+        else { setTimeout(hablarNativo, 60); }
         return;
-      }catch(e){ this._ultimoError='nativo-excepcion'; }
+      }catch(e){ this._ultimoError='nativo-excepcion'; try{ hablarNativo(); return; }catch(e2){} }
     }
     // 2) En el navegador: Web Speech API
     try{
@@ -2498,6 +2505,14 @@ function rondaHistoria(aciertos){
    Pensado para TEA: consignas por voz, sin presión de tiempo, refuerzo positivo,
    se queda en el mismo ejercicio hasta lograrlo. */
 
+/* Elige un índice al azar distinto del actual (para que no salga dos veces
+   seguidas la misma figura/camino/objeto). Si hay una sola opción, la repite. */
+function proxIndiceMot(actual, total){
+  if(total<=1) return 0;
+  let i; do{ i=Math.floor(Math.random()*total); } while(i===actual);
+  return i;
+}
+
 function menuMotricidad(){
   P.innerHTML=`<h1 class="titulo">✋ Mi cuerpo y mis manos</h1>
    <div class="menu-grid">
@@ -2517,10 +2532,20 @@ const CAMINOS=[
   {nom:'la montaña', d:'M20,240 L100,60 L180,240 L260,60', emoji:'⛰️'},
   {nom:'la ola', d:'M20,150 Q75,60 130,150 T240,150 T350,150', emoji:'🌊'},
   {nom:'el caracol', d:'M150,150 m0,0 a10,10 0 1,0 0.1,0 M150,150 m0,-40 a40,40 0 1,1 -0.1,0 M150,150 m0,-75 a75,75 0 1,1 -0.1,0', emoji:'🐌'},
-  {nom:'la escalera', d:'M20,240 L60,240 L60,190 L110,190 L110,140 L160,140 L160,90 L210,90 L210,40 L260,40', emoji:'📶'}
+  {nom:'la escalera', d:'M20,240 L60,240 L60,190 L110,190 L110,140 L160,140 L160,90 L210,90 L210,40 L260,40', emoji:'📶'},
+  {nom:'la curva', d:'M30,60 C120,60 120,240 210,240 C260,240 270,180 280,150', emoji:'➰'},
+  {nom:'el zigzag', d:'M20,80 L80,220 L140,80 L200,220 L270,80', emoji:'⚡'},
+  {nom:'el arcoíris', d:'M30,240 A120,120 0 0,1 270,240', emoji:'🌈'},
+  {nom:'el rulo', d:'M20,150 C20,80 90,80 90,150 C90,220 160,220 160,150 C160,80 230,80 230,150 C230,220 280,220 280,150', emoji:'🎢'},
+  {nom:'el cero', d:'M150,40 a70,110 0 1,0 0.1,0 Z', emoji:'⭕'},
+  {nom:'la ese', d:'M210,70 C210,40 90,40 90,90 C90,150 210,150 210,210 C210,255 90,255 90,225', emoji:'🐍'},
+  {nom:'el triángulo', d:'M150,50 L250,230 L50,230 Z', emoji:'🔺'},
+  {nom:'la espiral', d:'M150,150 m0,0 a15,15 0 1,1 0.1,0 M150,150 m0,-35 a35,35 0 1,1 -0.1,0 M150,150 m0,-60 a60,60 0 1,1 -0.1,0 M150,150 m0,-85 a85,85 0 1,1 -0.1,0', emoji:'🌀'},
+  {nom:'el puente', d:'M20,220 L20,160 C20,90 280,90 280,160 L280,220', emoji:'🌉'}
 ];
 function motSeguirCamino(){
-  const c=CAMINOS[_camIdx%CAMINOS.length];
+  _camIdx=proxIndiceMot(_camIdx, CAMINOS.length);
+  const c=CAMINOS[_camIdx];
   P.innerHTML=`
    <div class="escena" style="justify-content:flex-start;padding-top:6px">
      <div class="tarjeta" style="gap:10px">
@@ -2534,8 +2559,8 @@ function motSeguirCamino(){
        </div>
        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
          <button class="btn-grafismo" onclick="motSeguirCamino()">🔄 Empezar</button>
-         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="Estado.sumarEstrella(2);Mascota.festejar();Voz.hablar('¡Muy bien!');_camIdx++;setTimeout(motSeguirCamino,1200)">✅ Listo</button>
-         <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="_camIdx++;motSeguirCamino()">➡️ Otro</button>
+         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="Estado.sumarEstrella(2);Mascota.festejar();Voz.hablar('¡Muy bien!');setTimeout(motSeguirCamino,1200)">✅ Listo</button>
+         <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="motSeguirCamino()">➡️ Otro</button>
        </div>
      </div>
    </div>`;
@@ -2579,7 +2604,7 @@ function iniciarCamino(pathD){
   const end=()=>{ dibujando=false;
     if(progreso()>=0.85){ Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Muy bien! Seguiste todo el camino');
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
-      setTimeout(()=>{ _camIdx++; motSeguirCamino(); },1600);
+      setTimeout(()=>{ motSeguirCamino(); },1600);
     } };
   canvas.addEventListener('pointerdown',start);
   canvas.addEventListener('pointermove',move);
@@ -2598,19 +2623,44 @@ const ARRASTRES=[
   {obj:'⭐', dest:'🌙', nom:'la estrella', destNom:'el cielo'},
   {obj:'🚗', dest:'🏁', nom:'el auto', destNom:'la meta'},
   {obj:'🦋', dest:'🌸', nom:'la mariposa', destNom:'la flor'},
-  {obj:'🥕', dest:'🐰', nom:'la zanahoria', destNom:'el conejo'}
+  {obj:'🥕', dest:'🐰', nom:'la zanahoria', destNom:'el conejo'},
+  {obj:'🦴', dest:'🐶', nom:'el hueso', destNom:'el perro'},
+  {obj:'🍯', dest:'🐻', nom:'la miel', destNom:'el oso'},
+  {obj:'🧀', dest:'🐭', nom:'el queso', destNom:'el ratón'},
+  {obj:'🍌', dest:'🐵', nom:'la banana', destNom:'el mono'},
+  {obj:'⚽', dest:'🥅', nom:'la pelota', destNom:'el arco'},
+  {obj:'✉️', dest:'📬', nom:'la carta', destNom:'el buzón'},
+  {obj:'🌻', dest:'🌷', nom:'la flor', destNom:'el jardín'},
+  {obj:'🍪', dest:'🥛', nom:'la galletita', destNom:'la leche'},
+  {obj:'🚀', dest:'🌕', nom:'el cohete', destNom:'la luna'},
+  {obj:'🐝', dest:'🌼', nom:'la abeja', destNom:'la flor'},
+  {obj:'🔑', dest:'🔒', nom:'la llave', destNom:'el candado'},
+  {obj:'🧦', dest:'👣', nom:'la media', destNom:'el pie'}
 ];
 function motArrastrar(){
-  const it=ARRASTRES[_arrIdx%ARRASTRES.length];
+  _arrIdx=proxIndiceMot(_arrIdx, ARRASTRES.length);
+  const it=ARRASTRES[_arrIdx];
+  // Posiciones al azar para el objeto y el destino, así no aparecen siempre en
+  // el mismo lugar (evita que el niño lo haga en automático). Zona 300x300;
+  // objeto 80px, destino 96px. Nos aseguramos de que NO se superpongan.
+  const Z=300, OBJ=80, DEST=96, M=8; // margen interno
+  const rnd=(max)=>M+Math.floor(Math.random()*(max-2*M));
+  const dx=rnd(Z-DEST), dy=rnd(Z-DEST);   // destino
+  let ox, oy, intentos=0;
+  do{
+    ox=rnd(Z-OBJ); oy=rnd(Z-OBJ); intentos++;
+    // distancia entre centros para que no nazcan encimados ni pegados
+    var cerca=Math.hypot((ox+OBJ/2)-(dx+DEST/2),(oy+OBJ/2)-(dy+DEST/2))<130;
+  } while(cerca && intentos<40);
   P.innerHTML=`
    <div class="escena">
      <div class="tarjeta" style="gap:16px">
        <div class="consigna">Llevá ${it.nom} a ${it.destNom}</div>
        <div id="arrZona" style="position:relative;width:300px;max-width:86vw;height:300px;background:#fff;border-radius:18px;box-shadow:var(--sombra);touch-action:none;overflow:hidden">
-         <div id="arrDest" style="position:absolute;right:24px;bottom:24px;width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;border:4px dashed #ccc;border-radius:20px">${it.dest}</div>
-         <div id="arrObj" style="position:absolute;left:20px;top:20px;width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:4rem;cursor:grab;touch-action:none;user-select:none">${it.obj}</div>
+         <div id="arrDest" style="position:absolute;left:${dx}px;top:${dy}px;width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;border:4px dashed #ccc;border-radius:20px">${it.dest}</div>
+         <div id="arrObj" style="position:absolute;left:${ox}px;top:${oy}px;width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:4rem;cursor:grab;touch-action:none;user-select:none">${it.obj}</div>
        </div>
-       <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="_arrIdx++;motArrastrar()">➡️ Otro</button>
+       <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="motArrastrar()">➡️ Otro</button>
      </div>
    </div>`;
   Voz.hablar('Llevá '+it.nom+' a '+it.destNom+' con el dedo');
@@ -2642,7 +2692,7 @@ function iniciarArrastre(){
       obj.style.top=(dest.offsetTop+dest.clientHeight/2-obj.clientHeight/2)+'px';
       Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Muy bien! Lo lograste');
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
-      setTimeout(()=>{ _arrIdx++; motArrastrar(); },1500);
+      setTimeout(()=>{ motArrastrar(); },1500);
     }
   };
   obj.addEventListener('pointerdown',start);
@@ -2666,7 +2716,7 @@ function motTocar(){
   Voz.hablar('Tocá los globos con el dedo');
   const zona=document.getElementById('tocarZona');
   const cons=document.getElementById('tocarCons');
-  const emojis=['🎈','⭐','🍎','🦋','🐞','🎁'];
+  const emojis=['🎈','⭐','🍎','🦋','🐞','🎁','🌟','🐠','🌸','🍓','🐝','🎀','🦄','🍭','🐣','🌈','🍉','🐙','🎾','🦜'];
   const aparecer=()=>{
     if(!document.getElementById('tocarZona')) { limpiarTocar(); return; }
     const g=document.createElement('div');
@@ -2702,10 +2752,20 @@ const FIGURAS_PUNTOS=[
   {nom:'un cuadrado', pts:[[70,70],[230,70],[230,230],[70,230]]},
   {nom:'una casa', pts:[[150,40],[240,110],[240,250],[60,250],[60,110]]},
   {nom:'una estrella', pts:[[150,40],[180,120],[265,120],[195,175],[220,255],[150,205],[80,255],[105,175],[35,120],[120,120]]},
-  {nom:'un barco', pts:[[150,40],[150,180],[240,180],[210,240],[90,240],[60,180],[150,180]]}
+  {nom:'un barco', pts:[[150,40],[150,180],[240,180],[210,240],[90,240],[60,180],[150,180]]},
+  {nom:'un rombo', pts:[[150,40],[250,150],[150,260],[50,150]]},
+  {nom:'una flecha', pts:[[40,150],[170,150],[170,100],[260,175],[170,250],[170,200],[40,200]]},
+  {nom:'un pez', pts:[[60,150],[150,90],[230,90],[200,150],[230,210],[150,210],[60,150],[30,110],[30,190],[60,150]]},
+  {nom:'una cruz', pts:[[120,40],[180,40],[180,120],[260,120],[260,180],[180,180],[180,260],[120,260],[120,180],[40,180],[40,120],[120,120]]},
+  {nom:'un corazón', pts:[[150,90],[110,50],[60,70],[50,130],[150,240],[250,130],[240,70],[190,50]]},
+  {nom:'una luna', pts:[[170,50],[110,80],[95,150],[110,220],[170,250],[130,190],[125,150],[130,110]]},
+  {nom:'un árbol', pts:[[150,40],[200,120],[170,120],[220,200],[175,200],[175,260],[125,260],[125,200],[80,200],[130,120],[100,120]]},
+  {nom:'un rayo', pts:[[160,40],[100,160],[145,160],[110,260],[210,130],[160,130],[200,40]]},
+  {nom:'una llave', pts:[[80,110],[110,80],[150,110],[150,150],[240,150],[240,180],[220,180],[220,200],[200,200],[200,180],[150,180],[150,210],[110,240],[80,210],[80,110]]}
 ];
 function motUnirPuntos(){
-  const fig=FIGURAS_PUNTOS[_puntosIdx%FIGURAS_PUNTOS.length];
+  _puntosIdx=proxIndiceMot(_puntosIdx, FIGURAS_PUNTOS.length);
+  const fig=FIGURAS_PUNTOS[_puntosIdx];
   const pts=fig.pts;
   P.innerHTML=`
    <div class="escena" style="justify-content:flex-start;padding-top:6px">
@@ -2721,7 +2781,7 @@ function motUnirPuntos(){
              </g>`).join('')}
          </svg>
        </div>
-       <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="_puntosIdx++;motUnirPuntos()">➡️ Otra figura</button>
+       <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="motUnirPuntos()">➡️ Otra figura</button>
      </div>
    </div>`;
   Voz.hablar('Uní los puntos en orden. Tocá el número uno');
@@ -2752,7 +2812,7 @@ function iniciarUnirPuntos(fig){
       cons.textContent='¡Formaste '+fig.nom+'!';
       Mascota.festejar(); Voz.hablar('¡Muy bien! Formaste '+fig.nom);
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
-      setTimeout(()=>{ _puntosIdx++; motUnirPuntos(); },1900);
+      setTimeout(()=>{ motUnirPuntos(); },1900);
     }
   });
 }
@@ -2773,7 +2833,30 @@ const MOVIMIENTOS=[
   {emoji:'👐', txt:'Estirá los brazos a los costados', voz:'Estirá los brazos a los costados como un avión'},
   {emoji:'🙋', txt:'Tocá el cielo y después el piso', voz:'Tocá el cielo con las manos y después el piso'},
   {emoji:'🕺', txt:'Caminá en puntas de pie', voz:'Caminá despacio en puntas de pie'},
-  {emoji:'💪', txt:'Hacé fuerza como un superhéroe', voz:'Hacé fuerza con los brazos como un superhéroe'}
+  {emoji:'💪', txt:'Hacé fuerza como un superhéroe', voz:'Hacé fuerza con los brazos como un superhéroe'},
+  // — imitar animales —
+  {emoji:'🐰', txt:'Saltá como un conejito', voz:'Saltá con los dos pies juntos como un conejito'},
+  {emoji:'🦆', txt:'Caminá como un pato', voz:'Agachate y caminá moviéndote como un pato'},
+  {emoji:'🐻', txt:'Caminá como un oso', voz:'Caminá apoyando las manos y los pies como un oso'},
+  {emoji:'🐍', txt:'Arrastrate como una serpiente', voz:'Acostate en el piso y arrastrate como una serpiente'},
+  {emoji:'🦩', txt:'Parate en un pie como flamenco', voz:'Parate en un solo pie con los brazos abiertos como un flamenco'},
+  {emoji:'🦋', txt:'Movés los brazos como alas', voz:'Movés los brazos para arriba y para abajo como una mariposa'},
+  {emoji:'🐒', txt:'Saltá como un mono', voz:'Saltá y rascate como un mono'},
+  {emoji:'🦀', txt:'Caminá para el costado como cangrejo', voz:'Caminá para el costado como un cangrejo'},
+  // — equilibrio y coordinación —
+  {emoji:'🧎', txt:'Agachate y levantate despacio', voz:'Agachate despacio y volvé a levantarte'},
+  {emoji:'👏', txt:'Tocá tus rodillas y aplaudí', voz:'Tocá tus rodillas y después aplaudí. Otra vez'},
+  {emoji:'🤾', txt:'Tocá tu hombro con la mano cruzada', voz:'Con la mano derecha tocá el hombro izquierdo'},
+  {emoji:'🦵', txt:'Levantá una rodilla bien alto', voz:'Levantá una rodilla bien alto y después la otra'},
+  {emoji:'🙃', txt:'Movés la cabeza para los lados', voz:'Movés la cabeza despacio para un lado y para el otro'},
+  {emoji:'🤲', txt:'Abrí y cerrá las manos 5 veces', voz:'Abrí y cerrá las dos manos, cinco veces'},
+  {emoji:'👣', txt:'Marchá en el lugar', voz:'Marchá en el mismo lugar levantando bien los pies'},
+  {emoji:'🌟', txt:'Hacé una estrella con el cuerpo', voz:'Abrí los brazos y las piernas como una estrella'},
+  // — calmados / estiramiento —
+  {emoji:'🧘', txt:'Respirá hondo y estirá los brazos', voz:'Tomá aire y estirá los dos brazos bien alto'},
+  {emoji:'🤗', txt:'Abrazate a vos mismo', voz:'Cruzá los brazos y date un abrazo bien fuerte'},
+  {emoji:'💨', txt:'Soplá como si apagaras velitas', voz:'Tomá aire y soplá fuerte como apagando velitas'},
+  {emoji:'👋', txt:'Saludá con las dos manos', voz:'Saludá moviendo las dos manos bien alto'}
 ];
 function motMoverCuerpo(){
   if(!_cuerpoOrden.length){ _cuerpoOrden=UI.mezclar(MOVIMIENTOS.map((_,i)=>i)); _cuerpoIdx=0; }
@@ -2784,7 +2867,7 @@ function motMoverCuerpo(){
        <div style="font-size:1rem;color:#888">Movimiento ${(_cuerpoIdx%_cuerpoOrden.length)+1} de ${_cuerpoOrden.length}</div>
        <div style="font-size:8rem;line-height:1">${m.emoji}</div>
        <div class="consigna" style="font-size:1.5rem">${m.txt}</div>
-       <button class="fab-leer" style="width:100%;max-width:340px" onclick="Voz.hablar(${JSON.stringify(m.voz)})">🔊 Escuchar otra vez</button>
+       <button class="fab-leer" style="width:100%;max-width:340px" onclick="cuerpoEscuchar()">🔊 Escuchar otra vez</button>
        <button class="fab-leer" style="width:100%;max-width:340px;background:var(--pasto-hondo)" onclick="cuerpoHecho()">✅ ¡Lo hice!</button>
        <button class="btn-grafismo" onclick="cuerpoSaltar()">⏭️ Otro movimiento</button>
      </div>
@@ -2802,6 +2885,11 @@ function cuerpoHecho(){
   }
 }
 function cuerpoSaltar(){ _cuerpoIdx++; motMoverCuerpo(); }
+function cuerpoEscuchar(){
+  // Repite en voz la consigna del movimiento que se está mostrando ahora
+  const m=MOVIMIENTOS[_cuerpoOrden[_cuerpoIdx%_cuerpoOrden.length]];
+  if(m) Voz.hablar(m.voz);
+}
 
 /* ===================== JUEGO · PINTAR CON EL DEDO =====================
    Motricidad fina: el nene pinta una figura con el dedo. La pintura queda
@@ -4111,7 +4199,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 27;
+const APP_VERSION = 30;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

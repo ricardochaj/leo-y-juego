@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 33; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 34; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -2008,7 +2008,7 @@ function ordenarLetras(aciertos){
       Voz.hablar(f.dataset.l); pos++;
       if(pos===casillas.length){
         // palabra terminada correctamente
-        Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar(pal);
+        Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar(pal);
         setTimeout(()=>ordenarLetras(aciertos+1),1400);
       }
     }else{
@@ -2691,7 +2691,7 @@ function motSeguirCamino(){
        </div>
        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
          <button class="btn-grafismo" onclick="motSeguirCamino()">🔄 Empezar</button>
-         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="Estado.sumarEstrella(2);Mascota.festejar();Voz.hablar('¡Muy bien!');setTimeout(motSeguirCamino,1200)">✅ Listo</button>
+         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="Estado.sumarEstrella(2);Mascota.animar('¡Muy bien!',false);Voz.hablar('¡Muy bien!');setTimeout(motSeguirCamino,1200)">✅ Listo</button>
          <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="motSeguirCamino()">➡️ Otro</button>
        </div>
      </div>
@@ -2734,7 +2734,7 @@ function iniciarCamino(pathD){
     if(!d && !aviso){ aviso=true; Voz.hablar('Volvé al camino'); setTimeout(()=>aviso=false,1500); }
     pintar(p.x,p.y,d); ultimo=p; };
   const end=()=>{ dibujando=false;
-    if(progreso()>=0.85){ Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Muy bien! Seguiste todo el camino');
+    if(progreso()>=0.85){ Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Muy bien! Seguiste todo el camino');
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
       setTimeout(()=>{ motSeguirCamino(); },1600);
     } };
@@ -2822,7 +2822,7 @@ function iniciarArrastre(){
       const rz=zona.getBoundingClientRect();
       obj.style.left=(dest.offsetLeft+dest.clientWidth/2-obj.clientWidth/2)+'px';
       obj.style.top=(dest.offsetTop+dest.clientHeight/2-obj.clientHeight/2)+'px';
-      Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Muy bien! Lo lograste');
+      Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Muy bien! Lo lograste');
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
       setTimeout(()=>{ motArrastrar(); },1500);
     }
@@ -2861,7 +2861,7 @@ function motTocar(){
       g.style.transform='scale(1.4)'; g.style.opacity='0';
       aciertos++; cons.textContent=`Tocá los globos 🎈 (${aciertos}/${META})`;
       Estado.sumarEstrella(); setTimeout(()=>g.remove(),150);
-      if(aciertos>=META){ limpiarTocar(); Mascota.festejar(); Voz.hablar('¡Excelente puntería!');
+      if(aciertos>=META){ limpiarTocar(); Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Excelente puntería!');
         if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
         setTimeout(motTocar,1800);
       }
@@ -2956,9 +2956,10 @@ function iniciarUnirPuntos(fig){
     else {
       linea.setAttribute('points',[...hechos,pts[0]].map(p=>p.join(',')).join(' '));
       cons.textContent='¡Formaste '+fig.nom+'!';
-      Mascota.festejar(); Voz.hablar('¡Muy bien! Formaste '+fig.nom);
+      Mascota.animar('¡Muy bien!', false);   // festejo visual SIN voz (para no pisar el anuncio)
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
-      setTimeout(()=>{ motUnirPuntos(); },1900);
+      Voz.hablar('¡Muy bien! Formaste '+fig.nom);  // esta es la única voz
+      setTimeout(()=>{ motUnirPuntos(); },3000);   // tiempo para que termine de hablar
     }
   });
 }
@@ -3039,9 +3040,10 @@ function iniciarDibujarGuiado(fig){
       linea.setAttribute('points',[...hechos,pts[0]].map(p=>p.join(',')).join(' '));
       linea.setAttribute('fill','rgba(94,200,232,0.15)');
       cons.innerHTML='🎉 ¡Dibujaste '+fig.nom+'! '+fig.emoji;
-      Mascota.festejar(); Voz.hablar('¡Muy bien! Dibujaste '+fig.nom);
+      Mascota.animar('¡Muy bien!', false);   // festejo visual SIN voz
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
-      setTimeout(()=>{ motDibujarGuiado(); },2400);
+      Voz.hablar('¡Muy bien! Dibujaste '+fig.nom);  // única voz
+      setTimeout(()=>{ motDibujarGuiado(); },3200);
     }
   });
 }
@@ -3104,7 +3106,7 @@ function motMoverCuerpo(){
   setTimeout(()=>Voz.hablar(m.voz), 300);
 }
 function cuerpoHecho(){
-  Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Muy bien!');
+  Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Muy bien!');
   if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
   _cuerpoIdx++;
   if(_cuerpoIdx%_cuerpoOrden.length===0){ // completó una vuelta
@@ -3198,7 +3200,7 @@ function iniciarLienzo(pathFigura){
 function limpiarLienzo(){ if(_ctx){ _ctx.clearRect(0,0,300,300); } }
 function siguientePintar(){ _pintarIdx++; rondaPintar(); }
 function listoPintar(){
-  Estado.sumarEstrella(2); Mascota.festejar(); Voz.hablar('¡Qué lindo te quedó!');
+  Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Qué lindo te quedó!');
   if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
   setTimeout(siguientePintar,1400);
 }
@@ -3425,7 +3427,7 @@ function pantallaRutina(){
     if(h.includes(i)){ h=h.filter(x=>x!==i); }
     else { h.push(i); Voz.hablar(lista[i].txt); Estado.sumarEstrella(); Mascota.animar('¡Muy bien!'); }
     localStorage.setItem('leoyjuego-rutina-hechos', JSON.stringify(h));
-    if(h.length===lista.length){ Mascota.festejar(); Voz.hablar('¡Terminaste toda tu rutina!'); }
+    if(h.length===lista.length){ Mascota.animar("¡Muy bien!",false); Voz.hablar('¡Terminaste toda tu rutina!'); }
     pantallaRutina();
   };
 }
@@ -4428,7 +4430,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 33;
+const APP_VERSION = 34;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 31; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 32; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -2651,6 +2651,7 @@ function menuMotricidad(){
      <button class="btn-grande c-pasto"  onclick="Nav.ir(motArrastrar)"><span class="emo">🎯</span>Llevar a su lugar</button>
      <button class="btn-grande c-sol"    onclick="Nav.ir(motTocar)"><span class="emo">👆</span>Tocar globos</button>
      <button class="btn-grande c-coral"  onclick="Nav.ir(motUnirPuntos)"><span class="emo">🔢</span>Unir los puntos</button>
+     <button class="btn-grande c-cielo"  onclick="Nav.ir(motDibujarGuiado)"><span class="emo">✏️</span>Dibujar<br>uniendo puntos</button>
      <button class="btn-grande c-uva"    onclick="Nav.ir(motMoverCuerpo)"><span class="emo">🤸</span>Mover el cuerpo</button>
    </div>`;
   Voz.hablar('Elegí una actividad');
@@ -2883,16 +2884,16 @@ const FIGURAS_PUNTOS=[
   {nom:'un cuadrado', pts:[[70,70],[230,70],[230,230],[70,230]]},
   {nom:'una casa', pts:[[150,40],[240,110],[240,250],[60,250],[60,110]]},
   {nom:'una estrella', pts:[[150,40],[180,120],[265,120],[195,175],[220,255],[150,205],[80,255],[105,175],[35,120],[120,120]]},
-  {nom:'un barco', pts:[[150,40],[150,180],[240,180],[210,240],[90,240],[60,180],[150,180]]},
+  {nom:'un barco', pts:[[150,40],[150,180],[240,180],[210,240],[90,240],[60,180]]},
   {nom:'un rombo', pts:[[150,40],[250,150],[150,260],[50,150]]},
   {nom:'una flecha', pts:[[40,150],[170,150],[170,100],[260,175],[170,250],[170,200],[40,200]]},
-  {nom:'un pez', pts:[[60,150],[150,90],[230,90],[200,150],[230,210],[150,210],[60,150],[30,110],[30,190],[60,150]]},
+  {nom:'un pez', pts:[[60,150],[150,90],[230,90],[200,150],[230,210],[150,210],[30,110],[30,190]]},
   {nom:'una cruz', pts:[[120,40],[180,40],[180,120],[260,120],[260,180],[180,180],[180,260],[120,260],[120,180],[40,180],[40,120],[120,120]]},
   {nom:'un corazón', pts:[[150,90],[110,50],[60,70],[50,130],[150,240],[250,130],[240,70],[190,50]]},
-  {nom:'una luna', pts:[[170,50],[110,80],[95,150],[110,220],[170,250],[130,190],[125,150],[130,110]]},
+  {nom:'una luna', pts:[[180,45],[110,75],[90,150],[110,225],[180,255],[135,195],[128,150],[135,105]]},
   {nom:'un árbol', pts:[[150,40],[200,120],[170,120],[220,200],[175,200],[175,260],[125,260],[125,200],[80,200],[130,120],[100,120]]},
   {nom:'un rayo', pts:[[160,40],[100,160],[145,160],[110,260],[210,130],[160,130],[200,40]]},
-  {nom:'una llave', pts:[[80,110],[110,80],[150,110],[150,150],[240,150],[240,180],[220,180],[220,200],[200,200],[200,180],[150,180],[150,210],[110,240],[80,210],[80,110]]}
+  {nom:'una llave', pts:[[70,110],[110,70],[160,110],[160,160],[250,160],[250,210],[210,210],[210,180],[160,210],[110,250],[70,210]]}
 ];
 function motUnirPuntos(){
   _puntosIdx=proxIndiceMot(_puntosIdx, FIGURAS_PUNTOS.length);
@@ -2944,6 +2945,78 @@ function iniciarUnirPuntos(fig){
       Mascota.festejar(); Voz.hablar('¡Muy bien! Formaste '+fig.nom);
       if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
       setTimeout(()=>{ motUnirPuntos(); },1900);
+    }
+  });
+}
+
+/* ---------- 6) DIBUJAR UNIENDO PUNTOS (dibujo guiado de un objeto) ----------
+   El niño forma un OBJETO reconocible siguiendo puntos numerados en orden.
+   Se ve el emoji de referencia arriba ("vamos a dibujar un..."), y al terminar
+   se anuncia con voz y texto grande qué dibujó. Más motivador que figuras sueltas. */
+let _dibGuiadoIdx=-1;
+const DIBUJOS_GUIADOS=[
+  {nom:'una casa', emoji:'🏠', pts:[[80,220],[80,90],[150,45],[220,90],[220,220]]},
+  {nom:'un sol', emoji:'☀️', pts:[[150,70],[195,90],[215,135],[195,180],[150,200],[105,180],[85,135],[105,90]]},
+  {nom:'un pez', emoji:'🐟', pts:[[60,150],[120,100],[200,90],[240,130],[245,170],[200,210],[120,200]]},
+  {nom:'un barco', emoji:'⛵', pts:[[150,40],[150,170],[245,170],[210,235],[90,235],[55,170]]},
+  {nom:'una estrella', emoji:'⭐', pts:[[150,40],[178,115],[258,115],[193,163],[218,240],[150,193],[82,240],[107,163],[42,115],[122,115]]},
+  {nom:'un corazón', emoji:'❤️', pts:[[150,95],[115,55],[70,60],[50,110],[90,165],[150,230],[210,165],[250,110],[230,60],[185,55]]},
+  {nom:'un árbol', emoji:'🌳', pts:[[150,45],[105,110],[135,110],[90,165],[125,165],[135,210],[165,210],[175,165],[210,165],[165,110],[195,110]]},
+  {nom:'una flor', emoji:'🌸', pts:[[150,60],[185,80],[185,120],[220,140],[185,175],[185,215],[150,235],[115,215],[115,175],[80,140],[115,120],[115,80]]},
+  {nom:'un auto', emoji:'🚗', pts:[[50,180],[70,130],[130,130],[160,90],[230,90],[250,130],[250,180]]},
+  {nom:'una luna', emoji:'🌙', pts:[[180,45],[120,70],[95,150],[120,230],[180,255],[138,195],[130,150],[138,105]]}
+];
+function motDibujarGuiado(){
+  _dibGuiadoIdx=proxIndiceMot(_dibGuiadoIdx, DIBUJOS_GUIADOS.length);
+  const fig=DIBUJOS_GUIADOS[_dibGuiadoIdx];
+  const pts=fig.pts;
+  P.innerHTML=`
+   <div class="escena" style="justify-content:flex-start;padding-top:6px">
+     <div class="tarjeta" style="gap:8px">
+       <div class="consigna" id="dibGuiCons">Vamos a dibujar ${fig.nom} ${fig.emoji}</div>
+       <div style="font-size:.9rem;color:#888">Tocá los números en orden, del 1 al ${pts.length}</div>
+       <div style="position:relative;width:300px;max-width:86vw;aspect-ratio:1">
+         <svg id="dibGuiSvg" viewBox="0 0 300 300" style="width:100%;height:100%;background:#fff;border-radius:18px;box-shadow:var(--sombra);touch-action:manipulation">
+           <polyline id="dibGuiLinea" points="" fill="none" stroke="#5ec8e8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+           ${pts.map((p,i)=>`
+             <g class="dibpunto" data-i="${i}" style="cursor:pointer">
+               <circle cx="${p[0]}" cy="${p[1]}" r="17" fill="#fff" stroke="#f0a860" stroke-width="3"/>
+               <text x="${p[0]}" y="${p[1]+6}" text-anchor="middle" font-size="18" font-weight="700" fill="#f0a860">${i+1}</text>
+             </g>`).join('')}
+         </svg>
+       </div>
+       <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="motDibujarGuiado()">➡️ Otro dibujo</button>
+     </div>
+   </div>`;
+  Voz.hablar('Vamos a dibujar '+fig.nom+'. Tocá el número uno');
+  iniciarDibujarGuiado(fig);
+}
+function iniciarDibujarGuiado(fig){
+  const pts=fig.pts;
+  let sig=0; const hechos=[];
+  const svg=document.getElementById('dibGuiSvg');
+  const linea=document.getElementById('dibGuiLinea');
+  const cons=document.getElementById('dibGuiCons');
+  svg.addEventListener('pointerdown',ev=>{
+    const g=ev.target.closest('.dibpunto'); if(!g)return;
+    const i=+g.dataset.i;
+    if(i!==sig){ Voz.hablar('Tocá el número '+(sig+1)); return; }
+    hechos.push(pts[i]);
+    g.querySelector('circle').setAttribute('fill','#c8f0d8');
+    g.querySelector('circle').setAttribute('stroke','#2aa856');
+    g.querySelector('text').setAttribute('fill','#2aa856');
+    linea.setAttribute('points',hechos.map(p=>p.join(',')).join(' '));
+    Estado.sumarEstrella();
+    sig++;
+    if(sig<pts.length){ if(sig%2===0) cons.textContent='¡Bien! Seguí con el '+(sig+1); }
+    else {
+      // completó: cerramos la figura, la coloreamos suave y anunciamos el objeto
+      linea.setAttribute('points',[...hechos,pts[0]].map(p=>p.join(',')).join(' '));
+      linea.setAttribute('fill','rgba(94,200,232,0.15)');
+      cons.innerHTML='🎉 ¡Dibujaste '+fig.nom+'! '+fig.emoji;
+      Mascota.festejar(); Voz.hablar('¡Muy bien! Dibujaste '+fig.nom);
+      if(!(window.Calma&&Calma.activo)) Confeti.lanzar();
+      setTimeout(()=>{ motDibujarGuiado(); },2400);
     }
   });
 }
@@ -4330,7 +4403,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 31;
+const APP_VERSION = 32;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

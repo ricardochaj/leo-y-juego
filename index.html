@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 34; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 35; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -983,16 +983,29 @@ const Voz = {
     this.hablar(palabra, opts||{rate:.85});
   },
   // reconocimiento de voz (pronunciación)
+  // Normaliza para comparar: MAYÚSCULAS, sin tildes, sin puntuación ni espacios.
+  // Necesario porque el reconocedor devuelve "AVIÓN" y el banco tiene "AVION":
+  // sin normalizar, nunca coincidían y la palabra bien dicha se daba por mala.
+  _normalizar(s){
+    return (s||'')
+      .toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')  // saca tildes
+      .replace(/[^A-ZÑ0-9]/g,'');                        // saca puntos, espacios, etc.
+  },
   escuchar(objetivo, onResultado){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){ onResultado(null,'sin-soporte'); return; }
-    const r=new SR(); r.lang='es-AR'; r.maxAlternatives=3;
+    const r=new SR(); r.lang='es-AR'; r.maxAlternatives=5;
+    const obj=this._normalizar(objetivo);
     r.onresult=e=>{
-      const dicho=[...e.results[0]].map(x=>x.transcript.toUpperCase().trim());
-      const ok=dicho.some(d=>d.includes(objetivo.toUpperCase()));
-      onResultado(ok,dicho[0]);
+      const crudas=[...e.results[0]].map(x=>x.transcript.trim());
+      const norm=crudas.map(t=>this._normalizar(t));
+      // Aceptamos si alguna alternativa contiene la palabra (ya normalizada)
+      const ok=norm.some(d=>d.includes(obj)||obj.includes(d)&&d.length>=obj.length-1);
+      onResultado(ok, crudas[0]||'');
     };
     r.onerror=()=>onResultado(null,'error');
+    r.onnomatch=()=>onResultado(false,'');
     r.start();
   }
 };
@@ -3206,7 +3219,9 @@ function listoPintar(){
 }
 
 /* ===================== MÓDULO 7 · PRONUNCIACIÓN ===================== */
+let _pronIntentos=0;
 function modPronunciacion(){
+  _pronIntentos=0;
   const palObj=UI.azar(Banco.palabras); const pal=palObj.t;
   P.innerHTML=`
    <div class="escena">
@@ -3216,17 +3231,51 @@ function modPronunciacion(){
        <button class="btn-sonido" onclick="Voz.hablar('${pal}')">🔊 Escuchar</button>
        <button class="fab-leer" id="btnHablar">🎤 Decilo vos</button>
        <div class="consigna" id="resPron" style="min-height:30px"></div>
+       <!-- Salidas para que el niño NUNCA quede trabado si el micrófono no lo toma -->
+       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+         <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="pronLoDije()">✅ Ya lo dije</button>
+         <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="modPronunciacion()">➡️ Otra palabra</button>
+       </div>
      </div>
    </div>`;
   hidratarImgs();
   document.getElementById('btnHablar').onclick=()=>{
     const res=document.getElementById('resPron'); res.textContent='Escuchando... 👂';
     Voz.escuchar(pal,(ok,dicho)=>{
-      if(ok===null){ res.textContent= dicho==='sin-soporte'?'Tu dispositivo no tiene micrófono activo 😅':'No te escuché, probá de nuevo'; return; }
-      if(ok){ res.textContent='¡Perfecto! 🌟 ('+dicho+')'; Estado.sumarEstrella(2); Mascota.festejar(); setTimeout(modPronunciacion,1600); }
-      else{ res.textContent='Escuché "'+dicho+'". ¡Probá otra vez!'; Mascota.animar2(); }
+      if(ok===null){
+        res.textContent= dicho==='sin-soporte'
+          ? 'Tu dispositivo no tiene micrófono activo 😅. Podés tocar "Ya lo dije".'
+          : 'No te escuché. Probá otra vez o tocá "Ya lo dije".';
+        return;
+      }
+      if(ok){
+        res.textContent='¡Perfecto! 🌟 ('+dicho+')';
+        Estado.sumarEstrella(2);
+        Mascota.animar('¡Muy bien!',false);
+        Voz.hablar('¡Muy bien! '+pal);
+        setTimeout(modPronunciacion,2200);
+      } else {
+        _pronIntentos++;
+        // Regla pedagógica: no dejarlo trabado. A partir del 2º intento fallido
+        // le decimos y mostramos la palabra correcta, y le ofrecemos avanzar.
+        if(_pronIntentos>=2){
+          res.innerHTML='Se dice <b>'+pal+'</b>. ¡Escuchá y probá conmigo! 😊';
+          Voz.hablar('Se dice '+pal);
+        } else {
+          res.textContent = dicho ? 'Escuché "'+dicho+'". ¡Probá otra vez!' : 'No te entendí bien. ¡Probá otra vez!';
+          Mascota.animar2();
+        }
+      }
     });
   };
+}
+/* El adulto/niño confirma que la dijo aunque el micrófono no la haya tomado.
+   Evita que quede trabado por un problema técnico y no por su desempeño. */
+function pronLoDije(){
+  Estado.sumarEstrella();
+  Mascota.animar('¡Muy bien!',false);
+  Voz.hablar('¡Muy bien!');
+  setTimeout(modPronunciacion,1600);
 }
 
 /* ===================== TABLERO DE COMUNICACIÓN (CAA / tipo PECS) =====================
@@ -4430,7 +4479,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 35; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 36; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -310,6 +310,7 @@ body.calma .timer-circulo svg .barra-activa{stroke:#9ccfae !important}
 .armado-pal{display:flex;gap:2px;font-family:var(--fuente-display);font-size:2.6rem}
 .armado-pal .ap{color:#ccc;transition:color .3s,transform .3s}
 .armado-pal .ap[data-on="1"]{color:var(--cielo-hondo);transform:scale(1.12)}
+.armado-pal .ap[data-on="actual"]{color:var(--sol-hondo);transform:scale(1.25);animation:latido 1s infinite}
 .armado-img{margin-top:6px;animation:latido .5s}
 @keyframes latido{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .btn-grafismo{background:var(--sol-hondo);color:#fff;border:none;border-radius:50px;padding:12px 22px;font-family:var(--fuente-display);font-size:1.1rem;box-shadow:var(--sombra);cursor:pointer}
@@ -389,7 +390,11 @@ const DEF = {
     // — largas (4° a 7°) —
     {t:'MARIPOSA',img:'🦋'},{t:'ELEFANTE',img:'🐘'},{t:'CHOCOLATE',img:'🍫'},{t:'DINOSAURIO',img:'🦕'},
     {t:'BICICLETA',img:'🚲'},{t:'HELICOPTERO',img:'🚁'},{t:'COMPUTADORA',img:'💻'},{t:'TELESCOPIO',img:'🔭'},
-    {t:'COCODRILO',img:'🐊'},{t:'PINGUINO',img:'🐧'},{t:'ASTRONAUTA',img:'👨‍🚀'},{t:'BIBLIOTECA',img:'📚'}
+    {t:'COCODRILO',img:'🐊'},{t:'PINGUINO',img:'🐧'},{t:'ASTRONAUTA',img:'👨‍🚀'},{t:'BIBLIOTECA',img:'📚'},
+    // — palabras con sonidos que cuestan más (RR y combinaciones tr/dr/gr/pl) —
+    {t:'CARRO',img:'🚙'},{t:'ZORRO',img:'🦊'},{t:'TORRE',img:'🏰'},{t:'ARROZ',img:'🍚'},
+    {t:'TRACTOR',img:'🚜'},{t:'GRILLO',img:'🦗'},{t:'DRAGON',img:'🐉'},{t:'TRIGO',img:'🌾'},
+    {t:'PLANTA',img:'🌱'},{t:'PRINCESA',img:'👸'},{t:'CANGREJO',img:'🦀'},{t:'LADRILLO',img:'🧱'}
   ],
   // frases con pregunta y opciones [imagen, esCorrecta]
   frases: [
@@ -483,7 +488,23 @@ const DEF = {
     {sil:['ZA','PA','TO'], pal:'ZAPATO', img:'👟'},
     {sil:['MA','RI','PO','SA'], pal:'MARIPOSA', img:'🦋'},
     {sil:['CHO','CO','LA','TE'], pal:'CHOCOLATE', img:'🍫'},
-    {sil:['E','LE','FAN','TE'], pal:'ELEFANTE', img:'🐘'}
+    {sil:['E','LE','FAN','TE'], pal:'ELEFANTE', img:'🐘'},
+    // — sonidos que cuestan más: RR y combinaciones tr/dr/gr/pl (para el modo Deletrear) —
+    {sil:['PE','RRO'], pal:'PERRO', img:'🐶'},
+    {sil:['CA','RRO'], pal:'CARRO', img:'🚙'},
+    {sil:['ZO','RRO'], pal:'ZORRO', img:'🦊'},
+    {sil:['TO','RRE'], pal:'TORRE', img:'🏰'},
+    {sil:['A','RROZ'], pal:'ARROZ', img:'🍚'},
+    {sil:['GUI','TA','RRA'], pal:'GUITARRA', img:'🎸'},
+    {sil:['CO','CO','DRI','LO'], pal:'COCODRILO', img:'🐊'},
+    {sil:['TRAC','TOR'], pal:'TRACTOR', img:'🚜'},
+    {sil:['GRI','LLO'], pal:'GRILLO', img:'🦗'},
+    {sil:['DRA','GON'], pal:'DRAGON', img:'🐉'},
+    {sil:['TRI','GO'], pal:'TRIGO', img:'🌾'},
+    {sil:['PLAN','TA'], pal:'PLANTA', img:'🌱'},
+    {sil:['PRIN','CE','SA'], pal:'PRINCESA', img:'👸'},
+    {sil:['CAN','GRE','JO'], pal:'CANGREJO', img:'🦀'},
+    {sil:['LA','DRI','LLO'], pal:'LADRILLO', img:'🧱'}
   ],
   // letras del módulo reconocimiento: letra -> [[img,palabra],...]
   palabrasLetra: {
@@ -716,7 +737,7 @@ function formaSilaba(cons, voc, tam=64){
 /* ---------- BANCO: contenido editable (default + lo guardado) ---------- */
 const Banco = {
   data:null,
-  VERSION:9, // subir este número cuando se cambie el contenido por defecto
+  VERSION:10, // subir este número cuando se cambie el contenido por defecto
   cargar(){
     try{ const s=localStorage.getItem('leoyjuego-banco'); this.data = s?JSON.parse(s):this.clonarDefault(); }
     catch(e){ this.data=this.clonarDefault(); }
@@ -3236,6 +3257,7 @@ function modPronunciacion(){
          <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="pronLoDije()">✅ Ya lo dije</button>
          <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="modPronunciacion()">➡️ Otra palabra</button>
        </div>
+       <button class="btn-grafismo" style="background:var(--uva);margin-top:10px" onclick="modDeletrear()">🔤 Deletrear sílaba por sílaba</button>
      </div>
    </div>`;
   hidratarImgs();
@@ -3276,6 +3298,104 @@ function pronLoDije(){
   Mascota.animar('¡Muy bien!',false);
   Voz.hablar('¡Muy bien!');
   setTimeout(modPronunciacion,1600);
+}
+
+/* ===================== MÓDULO 7b · DELETREAR (sílaba por sílaba) =====================
+   Sub-modo de Pronunciación para reforzar sonidos que cuestan más (RR y
+   combinaciones como TR/DR/GR/PL: perro, carro, tractor, dragón, planta...).
+   El sistema dice UNA sílaba a la vez y el niño la repite antes de pasar a la
+   siguiente; al completar todas se arma y festeja la palabra. Usa el mismo
+   banco "silabeadas" del método fónico (con más palabras agregadas).
+   Igual que en Pronunciación: si el micrófono no lo toma, nunca queda
+   trabado — puede tocar "Ya lo dije" para seguir, o "Otra palabra" si se
+   frustra con esa en particular. */
+let _deletrIdx=0, _deletrSilIdx=0, _deletrIntentos=0;
+function modDeletrear(){
+  const lista=Banco.data.silabeadas;
+  if(!lista||!lista.length){ P.innerHTML='<div class="escena"><div class="tarjeta"><div class="consigna">No hay palabras. Agregalas en Zona Padres → Editar contenido.</div></div></div>'; return; }
+  _deletrIdx=Math.floor(Math.random()*lista.length);
+  _deletrSilIdx=0; _deletrIntentos=0;
+  pasoDeletrear();
+}
+function pasoDeletrear(){
+  const lista=Banco.data.silabeadas;
+  if(!lista||!lista.length) return;
+  const item=lista[_deletrIdx%lista.length];
+  const sils=item.sil;
+  const completa=_deletrSilIdx>=sils.length;
+  const silActual=!completa?sils[_deletrSilIdx]:null;
+  const chips=sils.map((s,i)=>{
+    const on = i<_deletrSilIdx ? '1' : (i===_deletrSilIdx && !completa ? 'actual' : '0');
+    return `<span class="ap" data-on="${on}">${s.toLowerCase()}</span>`;
+  }).join('');
+  P.innerHTML=`
+   <div class="escena">
+     <div class="tarjeta">
+       <div class="consigna">${completa?'¡Palabra completa! 🎉':'Escuchá y repetí esta sílaba 👇'}</div>
+       <div class="armado-pal">${chips}</div>
+       <div class="armado-img ${completa?'':'oculto'}">${renderImg(item.img,'4rem')}</div>
+       ${completa ? `
+         <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="modDeletrear()">➡️ Otra palabra</button>
+       ` : `
+         <button class="btn-sonido" id="btnEscucharSil">🔊 Escuchar "${silActual.toLowerCase()}"</button>
+         <button class="fab-leer" id="btnDecirSil">🎤 Decilo vos</button>
+         <div class="consigna" id="resDeletr" style="min-height:26px"></div>
+         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+           <button class="btn-grafismo" style="background:var(--pasto-hondo)" onclick="deletrLoDije()">✅ Ya lo dije</button>
+           <button class="btn-grafismo" style="background:var(--cielo-hondo)" onclick="modDeletrear()">➡️ Otra palabra</button>
+         </div>
+       `}
+     </div>
+   </div>`;
+  hidratarImgs();
+  if(completa){
+    Estado.sumarEstrella(2); Mascota.festejar();
+    Voz.decirPalabra(item.pal,{rate:.85});
+    setTimeout(modDeletrear,2400);
+    return;
+  }
+  document.getElementById('btnEscucharSil').onclick=()=>Voz.deslizarSilaba(silActual);
+  document.getElementById('btnDecirSil').onclick=()=>{
+    const res=document.getElementById('resDeletr'); res.textContent='Escuchando... 👂';
+    Voz.escuchar(silActual,(ok,dicho)=>{
+      if(ok===null){
+        res.textContent= dicho==='sin-soporte'
+          ? 'Tu dispositivo no tiene micrófono activo 😅. Podés tocar "Ya lo dije".'
+          : 'No te escuché. Probá otra vez o tocá "Ya lo dije".';
+        return;
+      }
+      if(ok){
+        res.textContent='¡Muy bien! 🌟';
+        Estado.sumarEstrella();
+        Mascota.animar('¡Muy bien!',false);
+        _deletrSilIdx++; _deletrIntentos=0;
+        setTimeout(pasoDeletrear,900);
+      } else {
+        _deletrIntentos++;
+        // Misma regla pedagógica que Pronunciación: no lo dejamos trabado.
+        // Del 2º intento fallido en adelante, mostramos y decimos la sílaba
+        // correcta pero seguimos en la MISMA sílaba hasta que la logre o
+        // toque "Ya lo dije" / "Otra palabra".
+        if(_deletrIntentos>=2){
+          res.innerHTML='Se dice <b>'+silActual.toLowerCase()+'</b>. ¡Escuchá y probá conmigo! 😊';
+          Voz.hablarSilaba(silActual);
+        } else {
+          res.textContent = dicho ? 'Escuché "'+dicho+'". ¡Probá otra vez!' : 'No te entendí bien. ¡Probá otra vez!';
+          Mascota.animar2();
+        }
+      }
+    });
+  };
+  // dice la sílaba en voz alta apenas entra a este paso
+  setTimeout(()=>Voz.deslizarSilaba(silActual),400);
+}
+/* El adulto/niño confirma que dijo la sílaba aunque el micrófono no la haya
+   tomado. Avanza a la siguiente sílaba (o completa la palabra). */
+function deletrLoDije(){
+  Estado.sumarEstrella();
+  Mascota.animar('¡Muy bien!',false);
+  _deletrSilIdx++; _deletrIntentos=0;
+  setTimeout(pasoDeletrear,700);
 }
 
 /* ===================== TABLERO DE COMUNICACIÓN (CAA / tipo PECS) =====================
@@ -4479,7 +4599,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 35;
+const APP_VERSION = 36;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

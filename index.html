@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 36; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 37; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -334,6 +334,9 @@ body.calma #mascota .cara{ filter:none; }
 #btnCalma{position:fixed;bottom:14px;left:14px;z-index:50;background:var(--tiza);border:none;border-radius:50%;width:48px;height:48px;font-size:1.4rem;box-shadow:var(--sombra);cursor:pointer}
 body.calma #btnCalma{background:#cfe0ec}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4A6FE8">
+<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 <div id="app">
@@ -4600,7 +4603,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 36;
+const APP_VERSION = 37;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {
@@ -4696,6 +4699,15 @@ setTimeout(()=>{
   }
 },2500);
 } // fin del if(!window.__actualizando) — guarda de actualización pendiente
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(function (error) {
+        console.log('Error al registrar service worker:', error);
+      });
+    });
+  }
 </script>
 </body>
 </html>

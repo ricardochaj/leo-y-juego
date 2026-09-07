@@ -19,7 +19,7 @@
    no se duplica nada y no hay choques de variables. */
 (function(){
   try{
-    var V_ACTUAL = 37; // debe coincidir con APP_VERSION de abajo
+    var V_ACTUAL = 38; // debe coincidir con APP_VERSION de abajo
     var vGuardada = parseInt(localStorage.getItem('leoyjuego-html-version')||'0',10);
     var htmlGuardado = localStorage.getItem('leoyjuego-html');
     // Si esta página YA es la versión nueva cargada vía blob, no volver a aplicar.
@@ -959,6 +959,8 @@ const Voz = {
   // SONIDO fonético de una letra (/mmm/, /sss/). Prioriza audio grabado.
   async sonidoLetra(letra){
     if(await Audios.reproducir(letra)) return;
+    // La H es muda en español: sin grabación del padre, no suena nada (correcto).
+    if(String(letra).toUpperCase()==='H') return;
     const reps={M:'mmmmm',N:'nnnnn',S:'ssssss',L:'lllll',R:'rrrrrr',F:'fffff',J:'jjjjj',
                 A:'aaaaa',E:'eeeee',I:'iiiii',O:'ooooo',U:'uuuuu'};
     const s=reps[letra]||(SONIDO[letra]||letra.toLowerCase());
@@ -1937,7 +1939,7 @@ function rondaLetra(set, aciertos, intento){
    <div class="escena">
      <div class="tarjeta">
        <div class="letra-grande">${letra} ${letra.toLowerCase()}</div>
-       <button class="btn-sonido" onclick="Voz.hablar('${letra}')">🔊 Escuchar</button>
+       <button class="btn-sonido" onclick="Voz.sonidoLetra('${letra}')">🔊 Escuchar</button>
        <div class="consigna">Tocá algo que empiece con ${letra}</div>
        <div class="fila-emoji" id="ops">
          ${ops.map((o,i)=>`<div class="opcion-img" data-ok="${o[2]}" data-pal="${o[1]}" data-i="${i}">${renderImg(o[0],'2.6rem')}</div>`).join('')}
@@ -1945,7 +1947,7 @@ function rondaLetra(set, aciertos, intento){
      </div>
    </div>`;
   hidratarImgs();
-  Voz.hablar(letra);
+  Voz.sonidoLetra(letra);
   document.getElementById('ops').onclick=e=>{
     const el=e.target.closest('.opcion-img'); if(!el||el.dataset.done)return;
     el.dataset.done=1; Voz.hablar(el.dataset.pal);
@@ -2042,7 +2044,7 @@ function ordenarLetras(aciertos){
       f.dataset.used=1; f.style.visibility='hidden';
       casillas[pos].textContent=f.dataset.l;
       casillas[pos].classList.add('correcto');
-      Voz.hablar(f.dataset.l); pos++;
+      Voz.sonidoLetra(f.dataset.l); pos++;
       if(pos===casillas.length){
         // palabra terminada correctamente
         Estado.sumarEstrella(2); Mascota.animar("¡Muy bien!",false); Voz.hablar(pal);
@@ -2168,13 +2170,13 @@ function juegoGlobos(){
   P.innerHTML=`<h1 class="titulo">🎈 Tocá la letra</h1>
     <div class="escena" style="justify-content:flex-start">
       <div class="consigna">Buscá la letra: <span id="objLetra" style="font-size:2.4rem;color:var(--coral)">${objetivo}</span></div>
-      <button class="btn-sonido" onclick="Voz.hablar(document.getElementById('objLetra').textContent)">🔊</button>
+      <button class="btn-sonido" onclick="Voz.sonidoLetra(document.getElementById('objLetra').textContent)">🔊</button>
       <div id="globos-zona"></div>
     </div>`;
-  Voz.hablar(objetivo);
+  Voz.sonidoLetra(objetivo);
   const zona=document.getElementById('globos-zona');
   const cols=['#ff6b6b','#3aa7ff','#9b6cff','#3ec96f','#f5a623'];
-  function nuevoObjetivo(){ objetivo=UI.azar(setL); document.getElementById('objLetra').textContent=objetivo; Voz.hablar(objetivo); }
+  function nuevoObjetivo(){ objetivo=UI.azar(setL); document.getElementById('objLetra').textContent=objetivo; Voz.sonidoLetra(objetivo); }
   const intv=setInterval(()=>{
     if(!activo||!document.getElementById('globos-zona')){clearInterval(intv);return;}
     const incluirObj=Math.random()<.5;
@@ -2185,7 +2187,7 @@ function juegoGlobos(){
     const dur=4200+Math.random()*1800;
     const anim=g.animate([{bottom:'-90px'},{bottom:zona.clientHeight+90+'px'}],{duration:dur,easing:'linear'});
     anim.onfinish=()=>g.remove();
-    g.onclick=()=>{ if(g.dataset.t)return; g.dataset.t=1; Voz.hablar(letra);
+    g.onclick=()=>{ if(g.dataset.t)return; g.dataset.t=1; Voz.sonidoLetra(letra);
       if(letra===objetivo){ g.style.background='var(--pasto)'; Estado.sumarEstrella(); aciertos++; Mascota.festejar(); g.remove();
         if(aciertos%3===0) nuevoObjetivo();
         if(aciertos>=9){ activo=false; clearInterval(intv); finRonda('voc',juegoGlobos);} }
@@ -4603,7 +4605,7 @@ function finRonda(mundoId, repetir){
 
    IMPORTANTE: cada vez que cambies el contenido, subí APP_VERSION acá abajo
    y el mismo número en version.json. */
-const APP_VERSION = 37;
+const APP_VERSION = 38;
 const URL_BASE = 'https://ricardochaj.github.io/leo-y-juego/';
 
 const AutoActualizar = {

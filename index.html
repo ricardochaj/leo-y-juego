@@ -963,6 +963,12 @@ const Voz = {
     if(String(letra).toUpperCase()==='H') return;
     const reps={M:'mmmmm',N:'nnnnn',S:'ssssss',L:'lllll',R:'rrrrrr',F:'fffff',J:'jjjjj',
                 A:'aaaaa',E:'eeeee',I:'iiiii',O:'ooooo',U:'uuuuu'};
+    // Las oclusivas (P,T,C,B,D,G) no se pueden sostener solas: dichas sueltas,
+    // el motor de voz las lee con el NOMBRE de la letra (p->"pe", t->"te").
+    // Se agrega una "u" breve de apoyo y se habla rápido para que suene lo más
+    // corto posible (pu, tu, cu, bu, du, gu) en vez del nombre de la letra.
+    const oclusivas={P:'pu',T:'tu',C:'cu',B:'bu',D:'du',G:'gu'};
+    if(oclusivas[letra]){ this.hablar(oclusivas[letra],{rate:1.15,pitch:1.05}); return; }
     const s=reps[letra]||(SONIDO[letra]||letra.toLowerCase());
     this.hablar(s,{rate:.6,pitch:1.05});
   },
